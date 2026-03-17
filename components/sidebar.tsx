@@ -8,27 +8,44 @@ import {
   Droplets, 
   GitBranch, 
   AlertTriangle,
-  Droplet
+  Droplet,
+  LogOut,
+  Shield,
+  Wallet
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { ViewType } from "@/app/page"
+import type { ViewType, User } from "@/app/page"
+import { Button } from "@/components/ui/button"
 
 interface SidebarProps {
   currentView: ViewType
   onNavigate: (view: ViewType) => void
+  user: User
+  onLogout: () => void
 }
 
-const menuItems = [
-  { id: "dashboard" as const, label: "Dashboard", icon: LayoutDashboard, code: "CU-08" },
-  { id: "usuarios" as const, label: "Gestión de Usuarios", icon: Users, code: "CU-01" },
-  { id: "familias" as const, label: "Familias y Servicio", icon: Home, code: "CU-02" },
-  { id: "pagos" as const, label: "Pagos y Morosidad", icon: CreditCard, code: "CU-05" },
-  { id: "tanque" as const, label: "Control de Tanque", icon: Droplets, code: "CU-03" },
-  { id: "distribucion" as const, label: "Distribución", icon: GitBranch, code: "CU-04" },
-  { id: "incidencias" as const, label: "Incidencias", icon: AlertTriangle, code: "CU-06" },
+const allMenuItems = [
+  { id: "dashboard" as const, label: "Dashboard", icon: LayoutDashboard, code: "CU-08", roles: ["admin", "tesorero"] },
+  { id: "usuarios" as const, label: "Gestión de Usuarios", icon: Users, code: "CU-01", roles: ["admin"] },
+  { id: "familias" as const, label: "Familias y Servicio", icon: Home, code: "CU-02", roles: ["admin", "tesorero"] },
+  { id: "pagos" as const, label: "Pagos y Morosidad", icon: CreditCard, code: "CU-05", roles: ["admin", "tesorero"] },
+  { id: "tanque" as const, label: "Control de Tanque", icon: Droplets, code: "CU-03", roles: ["admin"] },
+  { id: "distribucion" as const, label: "Distribución", icon: GitBranch, code: "CU-04", roles: ["admin"] },
+  { id: "incidencias" as const, label: "Incidencias", icon: AlertTriangle, code: "CU-06", roles: ["admin", "tesorero"] },
 ]
 
-export function Sidebar({ currentView, onNavigate }: SidebarProps) {
+const roleLabels = {
+  admin: { label: "Administrador", icon: Shield, color: "bg-primary" },
+  familia: { label: "Familia", icon: Home, color: "bg-accent" },
+  tesorero: { label: "Tesorero", icon: Wallet, color: "bg-success" },
+}
+
+export function Sidebar({ currentView, onNavigate, user, onLogout }: SidebarProps) {
+  // Filtrar items del menú según el rol del usuario
+  const menuItems = allMenuItems.filter(item => item.roles.includes(user.role))
+  const roleInfo = roleLabels[user.role]
+  const RoleIcon = roleInfo.icon
+
   return (
     <aside className="w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border flex flex-col">
       <div className="p-6 border-b border-sidebar-border">
@@ -43,7 +60,7 @@ export function Sidebar({ currentView, onNavigate }: SidebarProps) {
         </div>
       </div>
       
-      <nav className="flex-1 p-4">
+      <nav className="flex-1 p-4 overflow-auto">
         <ul className="space-y-1">
           {menuItems.map((item) => {
             const Icon = item.icon
@@ -72,16 +89,33 @@ export function Sidebar({ currentView, onNavigate }: SidebarProps) {
         </ul>
       </nav>
       
-      <div className="p-4 border-t border-sidebar-border">
+      <div className="p-4 border-t border-sidebar-border space-y-3">
+        {/* User info */}
         <div className="flex items-center gap-3 px-3 py-2">
-          <div className="w-8 h-8 rounded-full bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground text-xs font-medium">
-            AD
+          <div className={cn(
+            "w-8 h-8 rounded-full flex items-center justify-center text-primary-foreground",
+            roleInfo.color
+          )}>
+            <RoleIcon className="w-4 h-4" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sidebar-foreground truncate">Administrador</p>
-            <p className="text-xs text-sidebar-foreground/60 truncate">admin@sanmiguel.com</p>
+            <p className="text-sm font-medium text-sidebar-foreground truncate capitalize">
+              {user.username}
+            </p>
+            <p className="text-xs text-sidebar-foreground/60 truncate">{roleInfo.label}</p>
           </div>
         </div>
+        
+        {/* Logout button */}
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={onLogout}
+          className="w-full justify-start gap-2 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+        >
+          <LogOut className="w-4 h-4" />
+          Cerrar Sesión
+        </Button>
       </div>
     </aside>
   )
