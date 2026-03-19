@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  output: 'export', // Esto permite que funcione en GitHub Pages
   images: {
     unoptimized: true,
   },
