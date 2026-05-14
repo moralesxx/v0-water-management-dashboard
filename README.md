@@ -1,35 +1,133 @@
-# v0-water-management-dashboard
+# 🌊 v0-water-management-dashboard
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app).
+Este es un proyecto de **Next.js** creado con [v0](https://v0.app).
 
-## Built with v0
+---
 
-This repository is linked to a [v0](https://v0.app) project. You can continue developing by visiting the link below -- start new chats to make changes, and v0 will push commits directly to this repo. Every merge to `main` will automatically deploy.
+## 🚀 Tecnologías usadas
 
-[Continue working on v0 →](https://v0.app/chat/projects/prj_034rdEliTSyRDFP8AdDdiieO8sHI)
+- Next.js (framework de React)
+- v0 (generador de interfaces)
+- Node.js + npm
 
-## Getting Started
+---
 
-First, run the development server:
+## 📁 IMPORTANTE: Ubicación del proyecto (PATH)
 
-```bash
+Antes de ejecutar cualquier comando, debes estar dentro de la carpeta correcta del proyecto.
+
+Después de clonar el repositorio, la ruta debería ser algo como:
+
+C:\Users\L\Desktop\...\v0-water-management-dashboard
+
+👉 NO ejecutes `npm install` o `npm run dev` fuera de esta carpeta.
+
+---
+
+## 📌 Cómo verificar que estás en la carpeta correcta
+
+En la terminal ejecuta:
+
+dir
+
+Debes ver archivos como:
+
+- package.json (OBLIGATORIO)
+- next.config.js
+- app/
+- components/
+
+👉 Si NO ves `package.json`, estás en la carpeta incorrecta.
+
+---
+
+## 🧭 Cómo entrar correctamente al proyecto
+
+Ejemplo:
+
+cd Desktop
+cd v0-water-management-dashboard
+
+O usando ruta completa:
+
+cd "C:\Users\L\Desktop\v0-water-management-dashboard"
+
+---
+
+## ▶️ Instalación y ejecución
+
+1. Instalar dependencias:
+
+npm install
+
+2. Iniciar servidor de desarrollo:
+
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Abrir en el navegador:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+http://localhost:3000
 
-## Learn More
+---
 
-To learn more, take a look at the following resources:
+## ✏️ Editar el proyecto
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [v0 Documentation](https://v0.app/docs) - learn about v0 and how to use it.
+El archivo principal del proyecto es:
 
-<a href="https://v0.app/chat/api/kiro/clone/moralesxx/v0-water-management-dashboard" alt="Open in Kiro"><img src="https://pdgvvgmkdvyeydso.public.blob.vercel-storage.com/open%20in%20kiro.svg?sanitize=true" /></a>
+app/page.tsx
+
+Cada cambio se refleja automáticamente en el navegador.
+
+---
+
+## ⚠️ Problemas comunes
+
+### npm no se reconoce
+Significa que Node.js no está instalado o no está en el PATH del sistema.
+
+---
+
+### package.json no encontrado
+Estás en la carpeta incorrecta.
+
+Solución:
+
+dir
+cd v0-water-management-dashboard
+
+---
+
+### Vulnerabilidades
+Si ves mensajes como:
+
+2 vulnerabilities
+
+No es crítico. Puedes continuar.
+
+Opcional:
+
+npm audit fix
+
+---
+
+## 🧠 Resumen rápido
+
+cd v0-water-management-dashboard
+npm install
+npm run dev
+
+---
+
+## 📚 Recursos
+
+https://nextjs.org/docs
+https://nextjs.org/learn
+https://v0.app/docs
+
+---
+
+## 🚀 Resultado final
+
+Si todo está correcto, el proyecto se abre en:
+
+http://localhost:3000
