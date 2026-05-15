@@ -1,9 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export', // Esto permite que funcione en GitHub Pages
+  // IMPORTANTE: Se eliminó output: 'export' para habilitar las API Routes
+  // El proyecto ahora usa Next.js en modo servidor (Vercel serverless)
   images: {
     unoptimized: true,
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;

@@ -1,0 +1,246 @@
+// prisma/schema.prisma
+// DERCAS — Sistema de Gestión de Agua
+// 9 entidades principales según especificación FRD v1.0.0
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── ENUMS ───────────────────────────────────────────────────────────────────
+
+enum Rol {
+  ADMIN
+  TESORERO
+  ENCARGADO
+  FAMILIA
+}
+
+enum EstadoServicio {
+  ACTIVO
+  SUSPENDIDO
+}
+
+enum EstadoTurno {
+  PROGRAMADO
+  CONFIRMADO
+  CANCELADO
+}
+
+enum TipoPago {
+  COMPLETO
+  PARCIAL
+}
+
+enum EstadoPago {
+  PAGADO
+  PENDIENTE
+  MOROSO
+}
+
+enum TipoIncidencia {
+  FUGA
+  PRESION_BAJA
+  CONTAMINACION
+  AVERIA_BOMBA
+  OTRO
+}
+
+enum UrgenciaIncidencia {
+  BAJA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+enum EstadoIncidencia {
+  ABIERTA
+  EN_PROCESO
+  RESUELTA
+}
+
+enum TipoMantenimiento {
+  PREVENTIVO
+  CORRECTIVO
+}
+
+// ─── MODELOS ─────────────────────────────────────────────────────────────────
+
+model Usuario {
+  id              String   @id @default(cuid())
+  nombre          String
+  email           String   @unique
+  passwordHash    String
+  rol             Rol
+  activo          Boolean  @default(true)
+  intentosFallidos Int     @default(0)
+  bloqueadoHasta  DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relaciones
+  familia         Familia?
+  lecturasTanque  LecturaTanque[]
+  turnosConfirmados TurnoDistribucion[] @relation("ConfirmadoPor")
+  pagosRegistrados  Pago[]             @relation("RegistradoPor")
+  incidenciasReportadas Incidencia[]   @relation("ReportadaPor")
+  incidenciasAsignadas  Incidencia[]   @relation("AsignadaA")
+  mantenimientos  Mantenimiento[]
+  bitacora        BitacoraAuditoria[]
+
+  @@map("usuarios")
+}
+
+model Sector {
+  id          String   @id @default(cuid())
+  nombre      String   @unique
+  descripcion String?
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  // Relaciones
+  familias    Familia[]
+  turnos      TurnoDistribucion[]
+  incidencias Incidencia[]
+
+  @@map("sectores")
+}
+
+model Familia {
+  id                 String         @id @default(cuid())
+  codigoFamilia      String         @unique
+  nombreRepresentante String
+  direccion          String
+  telefono           String?
+  estadoServicio     EstadoServicio @default(ACTIVO)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  // Relaciones
+  usuarioId   String  @unique
+  usuario     Usuario @relation(fields: [usuarioId], references: [id])
+  sectorId    String
+  sector      Sector  @relation(fields: [sectorId], references: [id])
+  pagos       Pago[]
+
+  @@map("familias")
+}
+
+model ConfiguracionTanque {
+  id              String   @id @default(cuid())
+  capacidadLitros Float
+  umbralAlerta    Float    // porcentaje (0-100) bajo el cual se dispara alerta
+  updatedAt       DateTime @updatedAt
+
+  @@map("configuracion_tanque")
+}
+
+model LecturaTanque {
+  id           String   @id @default(cuid())
+  nivelLitros  Float
+  porcentaje   Float    // calculado automáticamente
+  observaciones String?
+  registradaEn DateTime @default(now())
+
+  // Relaciones
+  registradaPorId String
+  registradaPor   Usuario @relation(fields: [registradaPorId], references: [id])
+
+  @@map("lecturas_tanque")
+}
+
+model TurnoDistribucion {
+  id           String      @id @default(cuid())
+  dia          String      // "Lunes", "Martes", etc.
+  horaInicio   String      // "08:00"
+  duracionMin  Int
+  estado       EstadoTurno @default(PROGRAMADO)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  // Relaciones
+  sectorId      String
+  sector        Sector   @relation(fields: [sectorId], references: [id])
+  confirmadoPorId String?
+  confirmadoPor   Usuario? @relation("ConfirmadoPor", fields: [confirmadoPorId], references: [id])
+
+  @@map("turnos_distribucion")
+}
+
+model Pago {
+  id           String     @id @default(cuid())
+  mesPeriodo   Int        // 1-12
+  anioPeriodo  Int
+  monto        Float
+  tipoPago     TipoPago
+  estadoPago   EstadoPago @default(PAGADO)
+  pagadoEn     DateTime   @default(now())
+  notas        String?
+
+  // Relaciones
+  familiaId        String
+  familia          Familia @relation(fields: [familiaId], references: [id])
+  registradoPorId  String
+  registradoPor    Usuario @relation("RegistradoPor", fields: [registradoPorId], references: [id])
+
+  @@unique([familiaId, mesPeriodo, anioPeriodo])
+  @@map("pagos")
+}
+
+model Incidencia {
+  id          String             @id @default(cuid())
+  tipo        TipoIncidencia
+  descripcion String
+  urgencia    UrgenciaIncidencia @default(MEDIA)
+  estado      EstadoIncidencia   @default(ABIERTA)
+  resolucion  String?            // requerida al cerrar
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  // Relaciones
+  sectorId        String?
+  sector          Sector?  @relation(fields: [sectorId], references: [id])
+  reportadaPorId  String
+  reportadaPor    Usuario  @relation("ReportadaPor", fields: [reportadaPorId], references: [id])
+  asignadaAId     String?
+  asignadaA       Usuario? @relation("AsignadaA", fields: [asignadaAId], references: [id])
+  mantenimientos  Mantenimiento[]
+
+  @@map("incidencias")
+}
+
+model Mantenimiento {
+  id          String            @id @default(cuid())
+  tipo        TipoMantenimiento
+  componente  String
+  descripcion String
+  costo       Float?
+  fecha       DateTime
+  createdAt   DateTime          @default(now())
+
+  // Relaciones
+  responsableId String
+  responsable   Usuario    @relation(fields: [responsableId], references: [id])
+  incidenciaId  String?
+  incidencia    Incidencia? @relation(fields: [incidenciaId], references: [id])
+
+  @@map("mantenimientos")
+}
+
+model BitacoraAuditoria {
+  id        String   @id @default(cuid())
+  accion    String   // "LOGIN", "CREAR_FAMILIA", "REGISTRAR_PAGO", etc.
+  entidad   String   // "Usuario", "Familia", "Pago", etc.
+  entidadId String?
+  detalles  Json?    // datos adicionales del evento
+  timestamp DateTime @default(now())
+
+  // Relaciones
+  usuarioId String
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
+  @@map("bitacora_auditoria")
+}
