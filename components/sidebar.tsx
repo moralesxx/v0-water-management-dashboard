@@ -1,3 +1,4 @@
+// components/sidebar.tsx
 "use client"
 
 import { 
@@ -11,7 +12,8 @@ import {
   Droplet,
   LogOut,
   Shield,
-  Wallet
+  Wallet,
+  Zap 
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { ViewType, User } from "@/app/page"
@@ -25,25 +27,39 @@ interface SidebarProps {
 }
 
 const allMenuItems = [
-  { id: "dashboard" as const, label: "Dashboard", icon: LayoutDashboard, code: "CU-08", roles: ["admin", "tesorero"] },
-  { id: "usuarios" as const, label: "Gestión de Usuarios", icon: Users, code: "CU-01", roles: ["admin"] },
-  { id: "familias" as const, label: "Familias y Servicio", icon: Home, code: "CU-02", roles: ["admin", "tesorero"] },
-  { id: "pagos" as const, label: "Pagos y Morosidad", icon: CreditCard, code: "CU-05", roles: ["admin", "tesorero"] },
-  { id: "tanque" as const, label: "Control de Tanque", icon: Droplets, code: "CU-03", roles: ["admin"] },
-  { id: "distribucion" as const, label: "Distribución", icon: GitBranch, code: "CU-04", roles: ["admin"] },
-  { id: "incidencias" as const, label: "Incidencias", icon: AlertTriangle, code: "CU-06", roles: ["admin", "tesorero"] },
+  { id: "dashboard" as const, label: "Dashboard", icon: LayoutDashboard, code: "CU-08", roles: ["ADMIN", "TESORERO", "ENCARGADO"] },
+  { id: "usuarios" as const, label: "Gestión de Usuarios", icon: Users, code: "CU-01", roles: ["ADMIN"] },
+  { id: "familias" as const, label: "Familias y Servicio", icon: Home, code: "CU-02", roles: ["ADMIN", "TESORERO"] },
+  { id: "pagos" as const, label: "Pagos y Morosidad", icon: CreditCard, code: "CU-05", roles: ["ADMIN", "TESORERO"] },
+  { id: "tanque" as const, label: "Control de Tanque", icon: Droplets, code: "CU-03", roles: ["ADMIN", "ENCARGADO"] },
+  { id: "distribucion" as const, label: "Distribución", icon: GitBranch, code: "CU-04", roles: ["ADMIN", "ENCARGADO"] },
+  { id: "incidencias" as const, label: "Incidencias", icon: AlertTriangle, code: "CU-06", roles: ["ADMIN", "TESORERO", "ENCARGADO"] },
 ]
 
-const roleLabels = {
+// 🟢 Diccionario blindado: Acepta tanto MAYÚSCULAS como minúsculas para evitar caídas
+const roleLabels: Record<string, { label: string, icon: any, color: string }> = {
+  ADMIN: { label: "Administrador", icon: Shield, color: "bg-primary" },
   admin: { label: "Administrador", icon: Shield, color: "bg-primary" },
-  familia: { label: "Familia", icon: Home, color: "bg-accent" },
-  tesorero: { label: "Tesorero", icon: Wallet, color: "bg-success" },
+  
+  TESORERO: { label: "Tesorero", icon: Wallet, color: "bg-emerald-500 text-white" },
+  tesorero: { label: "Tesorero", icon: Wallet, color: "bg-emerald-500 text-white" },
+  
+  ENCARGADO: { label: "Encargado de Agua", icon: Zap, color: "bg-amber-500 text-white" },
+  encargado: { label: "Encargado de Agua", icon: Zap, color: "bg-amber-500 text-white" },
+  
+  FAMILIA: { label: "Familia", icon: Home, color: "bg-slate-500" },
+  familia: { label: "Familia", icon: Home, color: "bg-slate-500" },
 }
 
 export function Sidebar({ currentView, onNavigate, user, onLogout }: SidebarProps) {
-  // Filtrar items del menú según el rol del usuario
-  const menuItems = allMenuItems.filter(item => item.roles.includes(user.role))
-  const roleInfo = roleLabels[user.role]
+  // 1. Normalizamos el rol que viene del componente padre
+  const userRoleStr = user?.role || "FAMILIA"
+
+  // 2. Filtramos los items basándonos siempre en la versión en MAYÚSCULAS
+  const menuItems = allMenuItems.filter(item => item.roles.includes(userRoleStr.toUpperCase()))
+  
+  // 3. 🟢 SOLUCIÓN AL RUNTIME ERROR: Si por alguna razón el string no coincide, cae en "FAMILIA" en lugar de dar undefined
+  const roleInfo = roleLabels[userRoleStr] || roleLabels[userRoleStr.toUpperCase()] || roleLabels.FAMILIA
   const RoleIcon = roleInfo.icon
 
   return (
@@ -90,7 +106,6 @@ export function Sidebar({ currentView, onNavigate, user, onLogout }: SidebarProp
       </nav>
       
       <div className="p-4 border-t border-sidebar-border space-y-3">
-        {/* User info */}
         <div className="flex items-center gap-3 px-3 py-2">
           <div className={cn(
             "w-8 h-8 rounded-full flex items-center justify-center text-primary-foreground",
@@ -106,7 +121,6 @@ export function Sidebar({ currentView, onNavigate, user, onLogout }: SidebarProp
           </div>
         </div>
         
-        {/* Logout button */}
         <Button 
           variant="ghost" 
           size="sm" 

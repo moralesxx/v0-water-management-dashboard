@@ -1,11 +1,15 @@
 // prisma/seed.ts
-// Datos iniciales para el SISTEMA v1.0.0
-// Ejecutar con: npx prisma db seed
-
 import { PrismaClient, Rol, EstadoServicio } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 import bcrypt from "bcryptjs";
+import * as dotenv from "dotenv";
 
-const prisma = new PrismaClient();
+dotenv.config();
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter } as any);
 
 async function main() {
   console.log("🌱 Iniciando seed de SISTEMA...");
@@ -28,60 +32,55 @@ async function main() {
       create: { nombre: "Sector C", descripcion: "Zona central de la comunidad" },
     }),
   ]);
+  console.log(`✓ ${sectores.length} sectores creados`);
 
-  console.log(`${sectores.length} sectores creados`);
-
-  // ─── Usuario Administrador ────────────────────────────────────────────────
-  const adminPassword = await bcrypt.hash("Admin123!", 10);
+  // ─── Admin ────────────────────────────────────────────────────────────────
   const admin = await prisma.usuario.upsert({
     where: { email: "admin@sanmiguel.com" },
     update: {},
     create: {
-      nombre: "Administrador del Sistema ",
+      nombre: "Administrador del Sistema",
       email: "admin@sanmiguel.com",
-      passwordHash: adminPassword,
+      passwordHash: await bcrypt.hash("Admin123!", 10),
       rol: Rol.ADMIN,
     },
   });
-  console.log(`Admin creado: ${admin.email}`);
+  console.log(`✓ Admin: ${admin.email}`);
 
-  // ─── Usuario Tesorero ─────────────────────────────────────────────────────
-  const tesoreroPassword = await bcrypt.hash("Tesorero123!", 10);
+  // ─── Tesorero ─────────────────────────────────────────────────────────────
   const tesorero = await prisma.usuario.upsert({
     where: { email: "tesorero@sanmiguel.com" },
     update: {},
     create: {
       nombre: "Carlos Mendoza",
       email: "tesorero@sanmiguel.com",
-      passwordHash: tesoreroPassword,
+      passwordHash: await bcrypt.hash("Tesorero123!", 10),
       rol: Rol.TESORERO,
     },
   });
-  console.log(`Tesorero creado: ${tesorero.email}`);
+  console.log(`✓ Tesorero: ${tesorero.email}`);
 
-  // ─── Usuario Encargado de Distribución ───────────────────────────────────
-  const encargadoPassword = await bcrypt.hash("Encargado123!", 10);
+  // ─── Encargado ────────────────────────────────────────────────────────────
   const encargado = await prisma.usuario.upsert({
     where: { email: "encargado@sanmiguel.com" },
     update: {},
     create: {
       nombre: "Luis García",
       email: "encargado@sanmiguel.com",
-      passwordHash: encargadoPassword,
+      passwordHash: await bcrypt.hash("Encargado123!", 10),
       rol: Rol.ENCARGADO,
     },
   });
-  console.log(`Encargado creado: ${encargado.email}`);
+  console.log(`✓ Encargado: ${encargado.email}`);
 
-  // ─── Usuario Familia de ejemplo ───────────────────────────────────────────
-  const familiaPassword = await bcrypt.hash("Familia123!", 10);
+  // ─── Familia ──────────────────────────────────────────────────────────────
   const usuarioFamilia = await prisma.usuario.upsert({
     where: { email: "familia.perez@sanmiguel.com" },
     update: {},
     create: {
       nombre: "Juan Pérez",
       email: "familia.perez@sanmiguel.com",
-      passwordHash: familiaPassword,
+      passwordHash: await bcrypt.hash("Familia123!", 10),
       rol: Rol.FAMILIA,
     },
   });
@@ -99,33 +98,31 @@ async function main() {
       sectorId: sectores[0].id,
     },
   });
-  console.log(`Familia de ejemplo creada: FAM-001`);
+  console.log(`✓ Familia FAM-001 creada`);
 
-  // ─── Configuración inicial del tanque ─────────────────────────────────────
+  // ─── Tanque ───────────────────────────────────────────────────────────────
   const tanqueExistente = await prisma.configuracionTanque.findFirst();
   if (!tanqueExistente) {
     await prisma.configuracionTanque.create({
-      data: {
-        capacidadLitros: 50000,
-        umbralAlerta: 20,
-      },
+      data: { capacidadLitros: 50000, umbralAlerta: 20 },
     });
-    console.log("Configuración del tanque creada (50,000 L, alerta al 20%)");
+    console.log("✓ Tanque configurado (50,000 L, alerta 20%)");
   }
 
-  console.log("\nSeed completado exitosamente.");
-  console.log("\nCredenciales de acceso:");
-  console.log("   Admin:     admin@sanmiguel.com     / Admin123!");
-  console.log("   Tesorero:  tesorero@sanmiguel.com  / Tesorero123!");
-  console.log("   Encargado: encargado@sanmiguel.com / Encargado123!");
-  console.log("   Familia:   familia.perez@sanmiguel.com / Familia123!");
+  console.log("\n✅ Seed completado.");
+  console.log("\nCredenciales:");
+  console.log("  admin@sanmiguel.com        / Admin123!");
+  console.log("  tesorero@sanmiguel.com     / Tesorero123!");
+  console.log("  encargado@sanmiguel.com    / Encargado123!");
+  console.log("  familia.perez@sanmiguel.com / Familia123!");
 }
 
 main()
   .catch((e) => {
-    console.error("Error en seed:", e);
+    console.error("❌ Error en seed:", e);
     process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });

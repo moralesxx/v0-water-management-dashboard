@@ -32,7 +32,8 @@ export function DashboardView({ onNavigate }: DashboardViewProps) {
           <DistributionSchedule />
         </div>
         <div>
-          <QuickActions />
+          {/* 🟢 Le inyectamos la función de navegación a las acciones rápidas */}
+          <QuickActions onNavigate={onNavigate} />
         </div>
       </div>
     </div>

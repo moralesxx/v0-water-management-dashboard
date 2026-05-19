@@ -1,236 +1,150 @@
-"use client"
+// components/login-page.tsx
+"use client";
+import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { z } from "zod";
 
-import { useState } from "react"
-import { Droplet, User, Shield, Wallet, Home, Eye, EyeOff } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { cn } from "@/lib/utils"
+const schema = z.object({
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "Mínimo 6 caracteres"),
+});
 
-export type UserRole = "admin" | "familia" | "tesorero"
+export default function LoginPage() {
+  const { login, loading, error } = useAuth();
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [showPass, setShowPass] = useState(false);
 
-interface LoginPageProps {
-  onLogin: (role: UserRole, username: string) => void
-}
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setErrors((prev) => ({ ...prev, [e.target.name]: undefined }));
+  }
 
-const roles = [
-  {
-    id: "admin" as const,
-    label: "Administrador",
-    description: "Acceso completo al sistema",
-    icon: Shield,
-    color: "bg-primary",
-  },
-  {
-    id: "familia" as const,
-    label: "Familia",
-    description: "Ver estado de cuenta y pagos",
-    icon: Home,
-    color: "bg-accent",
-  },
-  {
-    id: "tesorero" as const,
-    label: "Tesorero",
-    description: "Gestión de pagos y reportes",
-    icon: Wallet,
-    color: "bg-success",
-  },
-]
-
-export function LoginPage({ onLogin }: LoginPageProps) {
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null)
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-
-    if (!selectedRole) {
-      setError("Por favor seleccione un tipo de usuario")
-      return
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const result = schema.safeParse(form);
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      result.error.errors.forEach((err) => {
+        if (err.path[0]) fieldErrors[err.path[0] as string] = err.message;
+      });
+      setErrors(fieldErrors);
+      return;
     }
-
-    if (!username.trim()) {
-      setError("Por favor ingrese su usuario")
-      return
-    }
-
-    if (!password.trim()) {
-      setError("Por favor ingrese su contraseña")
-      return
-    }
-
-    setIsLoading(true)
-
-    // Simular autenticación
-    setTimeout(() => {
-      setIsLoading(false)
-      onLogin(selectedRole, username)
-    }, 800)
+    await login(form.email, form.password);
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo y título */}
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="w-full max-w-sm">
+        {/* Logo / Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary mb-4">
-            <Droplet className="w-9 h-9 text-primary-foreground" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4">
+            <svg className="w-7 h-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 0v18M3 12h18" />
+            </svg>
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Sistema de Gestión del Agua</h1>
-          <p className="text-muted-foreground mt-1">Comunidad San Miguel</p>
+          <h1 className="text-2xl font-semibold text-foreground">Sistema de Agua</h1>
+          <p className="text-sm text-muted-foreground mt-1">Gestión comunitaria de agua potable</p>
         </div>
 
-        <Card className="shadow-xl border-border/50">
-          <CardHeader className="text-center pb-2">
-            <CardTitle className="text-xl">Iniciar Sesión</CardTitle>
-            <CardDescription>Seleccione su tipo de usuario para continuar</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Selección de rol */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Tipo de Usuario</Label>
-                <div className="grid grid-cols-3 gap-3">
-                  {roles.map((role) => {
-                    const Icon = role.icon
-                    const isSelected = selectedRole === role.id
-                    return (
-                      <button
-                        key={role.id}
-                        type="button"
-                        onClick={() => setSelectedRole(role.id)}
-                        className={cn(
-                          "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
-                          isSelected
-                            ? "border-primary bg-primary/5 shadow-sm"
-                            : "border-border hover:border-primary/50 hover:bg-muted/50"
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            "w-10 h-10 rounded-lg flex items-center justify-center",
-                            isSelected ? role.color : "bg-muted"
-                          )}
-                        >
-                          <Icon
-                            className={cn(
-                              "w-5 h-5",
-                              isSelected ? "text-primary-foreground" : "text-muted-foreground"
-                            )}
-                          />
-                        </div>
-                        <div className="text-center">
-                          <p
-                            className={cn(
-                              "text-xs font-medium",
-                              isSelected ? "text-primary" : "text-foreground"
-                            )}
-                          >
-                            {role.label}
-                          </p>
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-                {selectedRole && (
-                  <p className="text-xs text-muted-foreground text-center">
-                    {roles.find((r) => r.id === selectedRole)?.description}
-                  </p>
-                )}
-              </div>
+        {/* Card */}
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+          <h2 className="text-lg font-medium text-card-foreground mb-6">Iniciar sesión</h2>
 
-              {/* Campo de usuario */}
-              <div className="space-y-2">
-                <Label htmlFor="username">Usuario</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="username"
-                    type="text"
-                    placeholder="Ingrese su usuario"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-
-              {/* Campo de contraseña */}
-              <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Ingrese su contraseña"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Error message */}
-              {error && (
-                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-                  <p className="text-sm text-destructive">{error}</p>
-                </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Email */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1.5">
+                Correo electrónico
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="usuario@ejemplo.com"
+                className={`w-full px-3 py-2.5 rounded-lg border text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors ${
+                  errors.email ? "border-destructive" : "border-border"
+                }`}
+              />
+              {errors.email && (
+                <p className="text-xs text-destructive mt-1">{errors.email}</p>
               )}
+            </div>
 
-              {/* Botón de login */}
-              <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-                {isLoading ? (
-                  <span className="flex items-center gap-2">
-                    <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                    Ingresando...
-                  </span>
-                ) : (
-                  "Ingresar al Sistema"
-                )}
-              </Button>
-
-              {/* Demo credentials */}
-              <div className="pt-4 border-t border-border">
-                <p className="text-xs text-muted-foreground text-center mb-2">
-                  Credenciales de demostración:
-                </p>
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  <div className="text-center p-2 bg-muted/50 rounded-lg">
-                    <p className="font-medium text-foreground">Admin</p>
-                    <p className="text-muted-foreground">admin / 1234</p>
-                  </div>
-                  <div className="text-center p-2 bg-muted/50 rounded-lg">
-                    <p className="font-medium text-foreground">Familia</p>
-                    <p className="text-muted-foreground">familia / 1234</p>
-                  </div>
-                  <div className="text-center p-2 bg-muted/50 rounded-lg">
-                    <p className="font-medium text-foreground">Tesorero</p>
-                    <p className="text-muted-foreground">tesorero / 1234</p>
-                  </div>
-                </div>
+            {/* Password */}
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-foreground mb-1.5">
+                Contraseña
+              </label>
+              <div className="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPass ? "text" : "password"}
+                  autoComplete="current-password"
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  className={`w-full px-3 py-2.5 pr-10 rounded-lg border text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors ${
+                    errors.password ? "border-destructive" : "border-border"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPass ? (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  )}
+                </button>
               </div>
-            </form>
-          </CardContent>
-        </Card>
+              {errors.password && (
+                <p className="text-xs text-destructive mt-1">{errors.password}</p>
+              )}
+            </div>
+
+            {/* Error del servidor */}
+            {error && (
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2.5">
+                <p className="text-sm text-destructive">{error}</p>
+              </div>
+            )}
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-primary text-primary-foreground py-2.5 px-4 rounded-lg text-sm font-medium hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-60 disabled:cursor-not-allowed transition-colors mt-2"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                  </svg>
+                  Verificando...
+                </span>
+              ) : "Ingresar"}
+            </button>
+          </form>
+        </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          Sistema de Gestión y Control del Agua v1.0
+          ¿Problemas para ingresar? Contacta al administrador.
         </p>
       </div>
     </div>
-  )
+  );
 }

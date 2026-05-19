@@ -30,7 +30,7 @@ export function DelinquencyCard({ onViewDetails }: DelinquencyCardProps) {
           <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20">
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Deuda total acumulada</span>
-              <span className="text-lg font-semibold text-destructive">${totalDebt.toFixed(2)}</span>
+              <span className="text-lg font-semibold text-destructive">Q{totalDebt.toFixed(2)}</span>
             </div>
           </div>
 

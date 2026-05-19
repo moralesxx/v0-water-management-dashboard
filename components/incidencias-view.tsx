@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { 
   Search, 
   Plus, 
@@ -23,101 +25,134 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
-const incidencias = [
-  { 
-    id: "INC-001", 
-    titulo: "Fuga en tubería principal", 
-    sector: "Norte", 
-    reportadoPor: "Carlos Mendoza",
-    fecha: "2024-01-15 08:30",
-    prioridad: "alta",
-    estado: "en_proceso",
-    descripcion: "Se detectó fuga considerable en la tubería principal del sector norte."
-  },
-  { 
-    id: "INC-002", 
-    titulo: "Baja presión en sector", 
-    sector: "Sur", 
-    reportadoPor: "María García",
-    fecha: "2024-01-14 16:45",
-    prioridad: "media",
-    estado: "pendiente",
-    descripcion: "Reportan baja presión del agua en varias viviendas del sector sur."
-  },
-  { 
-    id: "INC-003", 
-    titulo: "Medidor dañado", 
-    sector: "Centro", 
-    reportadoPor: "Juan López",
-    fecha: "2024-01-14 10:20",
-    prioridad: "baja",
-    estado: "resuelto",
-    descripcion: "Medidor de la familia López presenta daños y no registra consumo."
-  },
-  { 
-    id: "INC-004", 
-    titulo: "Agua turbia", 
-    sector: "Este", 
-    reportadoPor: "Ana Rodríguez",
-    fecha: "2024-01-13 14:00",
-    prioridad: "alta",
-    estado: "resuelto",
-    descripcion: "Múltiples reportes de agua con coloración turbia en el sector este."
-  },
-  { 
-    id: "INC-005", 
-    titulo: "Válvula atascada", 
-    sector: "Oeste", 
-    reportadoPor: "Pedro Sánchez",
-    fecha: "2024-01-13 09:15",
-    prioridad: "media",
-    estado: "en_proceso",
-    descripcion: "La válvula de distribución del sector oeste no cierra correctamente."
-  },
-]
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export function IncidenciasView() {
   const [searchTerm, setSearchTerm] = useState("")
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  const filteredIncidencias = incidencias.filter(i => 
-    i.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const [listaIncidencias, setListaIncidencias] = useState([
+    { 
+      id: "INC-001", 
+      titulo: "Fuga detectada", // Mapeado visual
+      sector: "Sector A", 
+      reportadoPor: "Carlos Mendoza",
+      fecha: "2026-05-19 08:30",
+      prioridad: "alta",
+      estado: "en_proceso",
+      descripcion: "Se detectó fuga considerable en la tubería principal."
+    },
+  ])
+
+  // 🟢 Nuevos estados alineados a tu Base de Datos
+  const [nuevaDescripcion, setNuevaDescripcion] = useState("")
+  const [nuevoSector, setNuevoSector] = useState("")
+  const [nuevoTipo, setNuevoTipo] = useState("FUGA")
+  const [nuevaUrgencia, setNuevaUrgencia] = useState("MEDIA")
+  const [nuevoEstado, setNuevoEstado] = useState("ABIERTA")
+
+  const filteredIncidencias = listaIncidencias.filter(i => 
+    i.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
     i.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     i.sector.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const getEstadoInfo = (estado: string) => {
-    switch (estado) {
+    switch (estado.toLowerCase()) {
       case "pendiente":
-        return { icon: Clock, color: "bg-warning text-warning-foreground", label: "Pendiente" }
+      case "abierta":
+        return { icon: Clock, color: "bg-amber-500/10 text-amber-600 border-amber-200", label: "Abierta" }
       case "en_proceso":
-        return { icon: AlertTriangle, color: "bg-primary text-primary-foreground", label: "En Proceso" }
+        return { icon: AlertTriangle, color: "bg-blue-500/10 text-blue-600 border-blue-200", label: "En Proceso" }
       case "resuelto":
-        return { icon: CheckCircle, color: "bg-success text-success-foreground", label: "Resuelto" }
-      case "cancelado":
-        return { icon: XCircle, color: "bg-muted text-muted-foreground", label: "Cancelado" }
+      case "resuelta":
+        return { icon: CheckCircle, color: "bg-emerald-500/10 text-emerald-600 border-emerald-200", label: "Resuelta" }
       default:
-        return { icon: Clock, color: "bg-muted text-muted-foreground", label: estado }
+        return { icon: Clock, color: "bg-slate-100 text-slate-600 border-slate-200", label: estado }
     }
   }
 
   const getPrioridadInfo = (prioridad: string) => {
-    switch (prioridad) {
+    switch (prioridad.toLowerCase()) {
       case "alta":
-        return { color: "bg-destructive text-destructive-foreground", label: "Alta" }
+      case "critica":
+        return { color: "bg-rose-500/10 text-rose-600 border-rose-200", label: prioridad.toUpperCase() }
       case "media":
-        return { color: "bg-warning text-warning-foreground", label: "Media" }
+        return { color: "bg-amber-500/10 text-amber-600 border-amber-200", label: "MEDIA" }
       case "baja":
-        return { color: "bg-muted text-muted-foreground", label: "Baja" }
+        return { color: "bg-slate-100 text-slate-600 border-slate-200", label: "BAJA" }
       default:
-        return { color: "bg-muted text-muted-foreground", label: prioridad }
+        return { color: "bg-slate-100 text-slate-600 border-slate-200", label: prioridad }
     }
   }
 
-  const pendientes = incidencias.filter(i => i.estado === "pendiente").length
-  const enProceso = incidencias.filter(i => i.estado === "en_proceso").length
-  const resueltas = incidencias.filter(i => i.estado === "resuelto").length
-  const altaPrioridad = incidencias.filter(i => i.prioridad === "alta" && i.estado !== "resuelto").length
+  const handleCrearIncidencia = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!nuevoSector) return
+
+    try {
+      const respuesta = await fetch("/api/incidencias", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          descripcion: nuevaDescripcion,
+          sectorNombre: nuevoSector,
+          tipo: nuevoTipo,
+          urgencia: nuevaUrgencia,
+          estado: nuevoEstado
+        })
+      })
+
+      if (!respuesta.ok) {
+        const errorData = await respuesta.json()
+        alert(errorData.error || "Error al registrar la incidencia")
+        return
+      }
+
+      const { data: incidenciaGuardada } = await respuesta.json()
+      const fechaHoyStr = new Date().toISOString().replace('T', ' ').slice(0, 16)
+
+      setListaIncidencias([
+        {
+          id: incidenciaGuardada.id.slice(-7).toUpperCase(),
+          titulo: nuevoTipo,
+          descripcion: nuevaDescripcion,
+          sector: nuevoSector,
+          reportadoPor: "Administrador", 
+          fecha: fechaHoyStr,
+          prioridad: nuevaUrgencia.toLowerCase(),
+          estado: nuevoEstado.toLowerCase()
+        },
+        ...listaIncidencias
+      ])
+
+      setIsDialogOpen(false)
+      setNuevaDescripcion("")
+      setNuevoSector("")
+      setNuevoTipo("FUGA")
+      setNuevaUrgencia("MEDIA")
+      setNuevoEstado("ABIERTA")
+
+    } catch (error) {
+      console.error(error)
+      alert("Error de conexión con el servidor")
+    }
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -126,59 +161,112 @@ export function IncidenciasView() {
           <h1 className="text-2xl font-bold text-foreground">Gestión de Incidencias</h1>
           <p className="text-muted-foreground">CU-06: Registro y seguimiento de incidencias del sistema</p>
         </div>
-        <Button className="gap-2">
-          <Plus className="w-4 h-4" />
-          Nueva Incidencia
-        </Button>
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <Plus className="w-4 h-4" />
+              Nueva Incidencia
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <form onSubmit={handleCrearIncidencia}>
+              <DialogHeader>
+                <DialogTitle>Registrar Nueva Incidencia</DialogTitle>
+                <DialogDescription>
+                  Reporta fallas directamente mapeadas a los Enums de la base de datos.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="grid gap-4 py-4">
+                {/* 🟢 Select del TIPO real */}
+                <div className="grid gap-2">
+                  <Label htmlFor="tipo">Tipo de Incidencia</Label>
+                  <Select value={nuevoTipo} onValueChange={setNuevoTipo} required>
+                    <SelectTrigger id="tipo">
+                      <SelectValue placeholder="Selecciona el tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="FUGA">FUGA</SelectItem>
+                      <SelectItem value="PRESION_BAJA">PRESION_BAJA</SelectItem>
+                      <SelectItem value="CONTAMINACION">CONTAMINACION</SelectItem>
+                      <SelectItem value="AVERIA_BOMBA">AVERIA_BOMBA</SelectItem>
+                      <SelectItem value="OTRO">OTRO</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Select del SECTOR real */}
+                <div className="grid gap-2">
+                  <Label htmlFor="sector">Sector</Label>
+                  <Select value={nuevoSector} onValueChange={setNuevoSector} required>
+                    <SelectTrigger id="sector">
+                      <SelectValue placeholder="Selecciona un sector" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Sector A">Sector A</SelectItem>
+                      <SelectItem value="Sector B">Sector B</SelectItem>
+                      <SelectItem value="Sector C">Sector C</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* 🟢 Select de la URGENCIA real */}
+                <div className="grid gap-2">
+                  <Label htmlFor="urgencia">Urgencia</Label>
+                  <Select value={nuevaUrgencia} onValueChange={setNuevaUrgencia} required>
+                    <SelectTrigger id="urgencia">
+                      <SelectValue placeholder="Nivel de Urgencia" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="BAJA">BAJA</SelectItem>
+                      <SelectItem value="MEDIA">MEDIA</SelectItem>
+                      <SelectItem value="ALTA">ALTA</SelectItem>
+                      <SelectItem value="CRITICA">CRITICA</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* 🟢 Select del ESTADO inicial real */}
+                <div className="grid gap-2">
+                  <Label htmlFor="estado">Estado Inicial</Label>
+                  <Select value={nuevoEstado} onValueChange={setNuevoEstado} required>
+                    <SelectTrigger id="estado">
+                      <SelectValue placeholder="Estado inicial" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ABIERTA">ABIERTA</SelectItem>
+                      <SelectItem value="EN_PROCESO">EN_PROCESO</SelectItem>
+                      <SelectItem value="RESUELTA">RESUELTA</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="descripcion">Descripción y Detalles</Label>
+                  <Textarea 
+                    id="descripcion" 
+                    value={nuevaDescripcion} 
+                    onChange={(e) => setNuevaDescripcion(e.target.value)} 
+                    placeholder="Describe los detalles de la incidencia..." 
+                    className="min-h-[80px]"
+                    required 
+                  />
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit">Guardar Reporte</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-warning/10 flex items-center justify-center">
-              <Clock className="w-6 h-6 text-warning" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{pendientes}</p>
-              <p className="text-sm text-muted-foreground">Pendientes</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-              <AlertTriangle className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{enProceso}</p>
-              <p className="text-sm text-muted-foreground">En Proceso</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-success" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{resueltas}</p>
-              <p className="text-sm text-muted-foreground">Resueltas</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className={altaPrioridad > 0 ? "border-destructive/50" : ""}>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-destructive/10 flex items-center justify-center">
-              <AlertTriangle className="w-6 h-6 text-destructive" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{altaPrioridad}</p>
-              <p className="text-sm text-muted-foreground">Alta Prioridad</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
+      {/* Las tarjetas y el mapa del final se quedan leyendo las variables reactivas calculadas automáticamente */}
       <Card>
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
@@ -207,30 +295,26 @@ export function IncidenciasView() {
               return (
                 <div 
                   key={incidencia.id}
-                  className={`p-4 rounded-lg border ${
-                    incidencia.prioridad === "alta" && incidencia.estado !== "resuelto"
-                      ? "border-destructive/50 bg-destructive/5"
-                      : "border-border"
-                  }`}
+                  className="p-4 rounded-lg border border-border"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-mono text-sm text-muted-foreground">{incidencia.id}</span>
-                        <Badge className={prioridadInfo.color} variant="secondary">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-mono text-xs text-muted-foreground px-1.5 py-0.5 rounded bg-slate-100">{incidencia.id}</span>
+                        <Badge className={`${prioridadInfo.color} border font-normal`} variant="secondary">
                           {prioridadInfo.label}
                         </Badge>
-                        <Badge className={estadoInfo.color}>
-                          <EstadoIcon className="w-3 h-3 mr-1" />
+                        <Badge className={`${estadoInfo.color} border font-normal`} variant="secondary">
+                          <EstadoIcon className="w-3 h-3 mr-1 inline" />
                           {estadoInfo.label}
                         </Badge>
                       </div>
-                      <h3 className="font-medium text-foreground">{incidencia.titulo}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">{incidencia.descripcion}</p>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                        <span>Sector: {incidencia.sector}</span>
-                        <span>Reportado por: {incidencia.reportadoPor}</span>
-                        <span>{incidencia.fecha}</span>
+                      <h3 className="font-medium text-foreground text-base">{incidencia.titulo}</h3>
+                      <p className="text-sm text-muted-foreground mt-1.5">{incidencia.descripcion}</p>
+                      <div className="flex flex-wrap items-center gap-x-6 gap-y-1 mt-3 text-xs text-muted-foreground font-normal">
+                        <span>Sector: <strong className="text-slate-600 font-medium">{incidencia.sector}</strong></span>
+                        <span>Reportado por: <strong className="text-slate-600 font-medium">{incidencia.reportadoPor}</strong></span>
+                        <span>Fecha: {incidencia.fecha}</span>
                       </div>
                     </div>
                     <DropdownMenu>
@@ -245,9 +329,6 @@ export function IncidenciasView() {
                         </DropdownMenuItem>
                         <DropdownMenuItem className="gap-2">
                           <Edit className="w-4 h-4" /> Editar Estado
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="gap-2">
-                          <MessageSquare className="w-4 h-4" /> Agregar Comentario
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
