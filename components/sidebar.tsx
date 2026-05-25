@@ -9,7 +9,6 @@ import {
   Droplets, 
   GitBranch, 
   AlertTriangle,
-  Droplet,
   LogOut,
   Shield,
   Wallet,
@@ -18,6 +17,8 @@ import {
 import { cn } from "@/lib/utils"
 import type { ViewType, User } from "@/app/page"
 import { Button } from "@/components/ui/button"
+// 🟢 Corregimos la ruta apuntando al nombre de archivo exacto y actual en minúsculas
+import { IconoMenu } from '@/components/logos-sistemas';
 
 interface SidebarProps {
   currentView: ViewType
@@ -36,7 +37,6 @@ const allMenuItems = [
   { id: "incidencias" as const, label: "Incidencias", icon: AlertTriangle, code: "CU-06", roles: ["ADMIN", "TESORERO", "ENCARGADO"] },
 ]
 
-// 🟢 Diccionario blindado: Acepta tanto MAYÚSCULAS como minúsculas para evitar caídas
 const roleLabels: Record<string, { label: string, icon: any, color: string }> = {
   ADMIN: { label: "Administrador", icon: Shield, color: "bg-primary" },
   admin: { label: "Administrador", icon: Shield, color: "bg-primary" },
@@ -52,13 +52,8 @@ const roleLabels: Record<string, { label: string, icon: any, color: string }> = 
 }
 
 export function Sidebar({ currentView, onNavigate, user, onLogout }: SidebarProps) {
-  // 1. Normalizamos el rol que viene del componente padre
   const userRoleStr = user?.role || "FAMILIA"
-
-  // 2. Filtramos los items basándonos siempre en la versión en MAYÚSCULAS
   const menuItems = allMenuItems.filter(item => item.roles.includes(userRoleStr.toUpperCase()))
-  
-  // 3. 🟢 SOLUCIÓN AL RUNTIME ERROR: Si por alguna razón el string no coincide, cae en "FAMILIA" en lugar de dar undefined
   const roleInfo = roleLabels[userRoleStr] || roleLabels[userRoleStr.toUpperCase()] || roleLabels.FAMILIA
   const RoleIcon = roleInfo.icon
 
@@ -66,13 +61,11 @@ export function Sidebar({ currentView, onNavigate, user, onLogout }: SidebarProp
     <aside className="w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border flex flex-col">
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-sidebar-primary flex items-center justify-center">
-            <Droplet className="w-6 h-6 text-sidebar-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="font-semibold text-sm text-sidebar-foreground">Sistema de Agua</h1>
-            <p className="text-xs text-sidebar-foreground/70">Comunidad San Miguel</p>
-          </div>
+          
+          {/* 🟢 REEMPLAZO LOGRADO: Quitamos la caja con el Droplet gris y ponemos tu logo interactivo */}
+          <IconoMenu />
+          
+          
         </div>
       </div>
       
@@ -89,7 +82,7 @@ export function Sidebar({ currentView, onNavigate, user, onLogout }: SidebarProp
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
                     isActive 
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" 
                       : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                   )}
                 >

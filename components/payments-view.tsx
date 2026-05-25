@@ -116,7 +116,7 @@ const handleExportar = () => {
   variant="outline" 
   size="sm" 
   className="h-8 gap-1.5 text-xs"
-  onClick={handleExportar} // 🟢 Conexión con la descarga
+  onClick={handleExportar} //  Conexión con la descarga
 >
   <Download className="w-3.5 h-3.5" />
   Exportar

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { z } from "zod";
+// 🟢 Corregimos la ruta apuntando al archivo exacto en minúsculas y singular
+import { EscudoLogin } from "@/components/logos-sistemas";
 
 const schema = z.object({
   email: z.string().email("Email inválido"),
@@ -35,27 +37,23 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    // 🟢 1. Forzamos el fondo de pantalla exacto a #0A1728
+    <div className="min-h-screen flex items-center justify-center bg-[#0A1728] p-4 font-sans antialiased">
       <div className="w-full max-w-sm">
-        {/* Logo / Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4">
-            <svg className="w-7 h-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 0v18M3 12h18" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-semibold text-foreground">Sistema de Agua</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gestión comunitaria de agua potable</p>
+        
+        {/* 🟢 2. REEMPLAZO LOGRADO: Quitamos el logo gris viejo y los títulos de relleno para poner tu Escudo Oficial */}
+        <div className="mb-8">
+          <EscudoLogin />
         </div>
 
-        {/* Card */}
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-          <h2 className="text-lg font-medium text-card-foreground mb-6">Iniciar sesión</h2>
+        {/* 🟢 3. Forzamos la tarjeta a usar tu color #112237 con un borde sutil y sombra estética */}
+        <div className="bg-[#112237] border border-slate-800 rounded-2xl p-6 shadow-[0_0_50px_-12px_rgba(34,211,238,0.15)] text-slate-100">
+          <h2 className="text-lg font-medium text-white mb-6">Iniciar sesión</h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1.5">
+              <label htmlFor="email" className="block text-xs font-medium text-slate-300 mb-1.5">
                 Correo electrónico
               </label>
               <input
@@ -66,8 +64,9 @@ export default function LoginPage() {
                 value={form.email}
                 onChange={handleChange}
                 placeholder="usuario@ejemplo.com"
-                className={`w-full px-3 py-2.5 rounded-lg border text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors ${
-                  errors.email ? "border-destructive" : "border-border"
+                // 🟢 Pasamos las cajas de texto a un tono oscuro integrado con el login
+                className={`w-full px-3 py-2.5 rounded-lg border text-sm bg-[#0A1728] text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-colors ${
+                  errors.email ? "border-destructive" : "border-slate-700"
                 }`}
               />
               {errors.email && (
@@ -77,7 +76,7 @@ export default function LoginPage() {
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-foreground mb-1.5">
+              <label htmlFor="password" className="block text-xs font-medium text-slate-300 mb-1.5">
                 Contraseña
               </label>
               <div className="relative">
@@ -89,14 +88,14 @@ export default function LoginPage() {
                   value={form.password}
                   onChange={handleChange}
                   placeholder="••••••••"
-                  className={`w-full px-3 py-2.5 pr-10 rounded-lg border text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors ${
-                    errors.password ? "border-destructive" : "border-border"
+                  className={`w-full px-3 py-2.5 pr-10 rounded-lg border text-sm bg-[#0A1728] text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-colors ${
+                    errors.password ? "border-destructive" : "border-slate-700"
                   }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
                 >
                   {showPass ? (
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -122,15 +121,15 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Submit */}
+            {/* Submit — Estilizado en Cian brillante */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary text-primary-foreground py-2.5 px-4 rounded-lg text-sm font-medium hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-60 disabled:cursor-not-allowed transition-colors mt-2"
+              className="w-full bg-cyan-500 text-[#0A1728] py-2.5 px-4 rounded-lg text-sm font-semibold hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-lg shadow-cyan-500/10 mt-2"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin w-4 h-4 text-[#0A1728]" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                   </svg>
@@ -141,7 +140,7 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-xs text-muted-foreground mt-6">
+        <p className="text-center text-xs text-slate-500 mt-6">
           ¿Problemas para ingresar? Contacta al administrador.
         </p>
       </div>
