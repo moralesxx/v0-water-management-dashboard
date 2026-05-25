@@ -1,8 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // IMPORTANTE: Se eliminó output: 'export' para habilitar las API Routes
+  // El proyecto ahora usa Next.js en modo servidor (Vercel serverless)
   images: {
-    unoptimized: true, 
+    unoptimized: true,
   },
-}
-module.exports = nextConfig
+};
+
+export default nextConfig;
