@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { z } from "zod";
-// 🟢 Corregimos la ruta apuntando al archivo exacto en minúsculas y singular
 import { EscudoLogin } from "@/components/logos-sistemas";
 
 const schema = z.object({
@@ -37,23 +36,47 @@ export default function LoginPage() {
   }
 
   return (
-    // 🟢 1. Forzamos el fondo de pantalla exacto a #0A1728
-    <div className="min-h-screen flex items-center justify-center bg-[#0A1728] p-4 font-sans antialiased">
-      <div className="w-full max-w-sm">
+    // Contenedor principal sin bordes raros que ocupa toda la pantalla
+    <div className="min-h-screen w-screen flex bg-background font-sans antialiased">
+      
+      {/* 🟢 LADO IZQUIERDO: Panel institucional premium (Se oculta en celulares automágicamente con 'hidden md:flex') */}
+      <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-cyan-700 via-cyan-600 to-[#0A1728] items-center justify-center p-12 relative overflow-hidden">
+        {/* Efecto de fondo abstracto de agua */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent)] pointer-events-none" />
         
-        {/* 🟢 2. REEMPLAZO LOGRADO: Quitamos el logo gris viejo y los títulos de relleno para poner tu Escudo Oficial */}
-        <div className="mb-8">
-          <EscudoLogin />
+        <div className="max-w-md text-center text-white space-y-6 z-10">
+          <div className="inline-block p-4 bg-white/10 backdrop-blur-md rounded-3xl border border-white/10 shadow-lg">
+            {/* Cargamos tu escudo oficial */}
+            <EscudoLogin />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-xl font-medium text-cyan-100">Portal de Servicios Digitales</h3>
+            <p className="text-sm text-cyan-200/80 leading-relaxed">
+              Simplificando el control administrativo, la recaudación y el monitoreo de la red de distribución de agua potable.
+            </p>
+          </div>
         </div>
+      </div>
 
-        {/* 🟢 3. Forzamos la tarjeta a usar tu color #112237 con un borde sutil y sombra estética */}
-        <div className="bg-[#112237] border border-slate-800 rounded-2xl p-6 shadow-[0_0_50px_-12px_rgba(34,211,238,0.15)] text-slate-100">
-          <h2 className="text-lg font-medium text-white mb-6">Iniciar sesión</h2>
+      {/* 🟢 LADO DERECHO: Formulario de inicio de sesión limpio y espaciado */}
+      <div className="w-full md:w-1/2 flex items-center justify-center p-8 bg-card">
+        <div className="w-full max-w-sm space-y-8">
+          
+          {/* Cabecera para móviles (solo visible si no está en desktop) */}
+          <div className="md:hidden text-center">
+            <EscudoLogin />
+            <div className="border-b border-border/60 my-6" />
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900">Ingresar al Sistema</h2>
+            <p className="text-sm text-muted-foreground">Coloque sus credenciales autorizadas para continuar.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-xs font-medium text-slate-300 mb-1.5">
+            <div className="space-y-1.5">
+              <label htmlFor="email" className="text-xs font-semibold text-slate-700">
                 Correo electrónico
               </label>
               <input
@@ -64,19 +87,19 @@ export default function LoginPage() {
                 value={form.email}
                 onChange={handleChange}
                 placeholder="usuario@ejemplo.com"
-                // 🟢 Pasamos las cajas de texto a un tono oscuro integrado con el login
-                className={`w-full px-3 py-2.5 rounded-lg border text-sm bg-[#0A1728] text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-colors ${
-                  errors.email ? "border-destructive" : "border-slate-700"
+                suppressHydrationWarning={true}
+                className={`w-full px-3.5 py-2.5 rounded-xl border text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/40 transition-all ${
+                  errors.email ? "border-destructive ring-1 ring-destructive/40" : "border-border"
                 }`}
               />
               {errors.email && (
-                <p className="text-xs text-destructive mt-1">{errors.email}</p>
+                <p className="text-xs text-destructive mt-1 font-medium">{errors.email}</p>
               )}
             </div>
 
             {/* Password */}
-            <div>
-              <label htmlFor="password" className="block text-xs font-medium text-slate-300 mb-1.5">
+            <div className="space-y-1.5">
+              <label htmlFor="password" className="text-xs font-semibold text-slate-700">
                 Contraseña
               </label>
               <div className="relative">
@@ -88,14 +111,15 @@ export default function LoginPage() {
                   value={form.password}
                   onChange={handleChange}
                   placeholder="••••••••"
-                  className={`w-full px-3 py-2.5 pr-10 rounded-lg border text-sm bg-[#0A1728] text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-colors ${
-                    errors.password ? "border-destructive" : "border-slate-700"
+                  suppressHydrationWarning={true}
+                  className={`w-full px-3.5 py-2.5 pr-10 rounded-xl border text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/40 transition-all ${
+                    errors.password ? "border-destructive ring-1 ring-destructive/40" : "border-border"
                   }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                 >
                   {showPass ? (
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -110,39 +134,31 @@ export default function LoginPage() {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-xs text-destructive mt-1">{errors.password}</p>
+                <p className="text-xs text-destructive mt-1 font-medium">{errors.password}</p>
               )}
             </div>
 
             {/* Error del servidor */}
             {error && (
-              <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2.5">
-                <p className="text-sm text-destructive">{error}</p>
+              <div className="bg-destructive/10 border border-destructive/20 rounded-xl px-3.5 py-2.5">
+                <p className="text-sm text-destructive font-medium">{error}</p>
               </div>
             )}
 
-            {/* Submit — Estilizado en Cian brillante */}
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-cyan-500 text-[#0A1728] py-2.5 px-4 rounded-lg text-sm font-semibold hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-lg shadow-cyan-500/10 mt-2"
+              className="w-full bg-cyan-600 text-white py-3 px-4 rounded-xl text-sm font-semibold hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-xs mt-2"
             >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin w-4 h-4 text-[#0A1728]" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                  </svg>
-                  Verificando...
-                </span>
-              ) : "Ingresar"}
+              {loading ? "Verificando cuenta..." : "Acceder al portal"}
             </button>
           </form>
-        </div>
 
-        <p className="text-center text-xs text-slate-500 mt-6">
-          ¿Problemas para ingresar? Contacta al administrador.
-        </p>
+          <p className="text-center text-xs text-slate-400">
+            ¿Problemas para ingresar? Contacta al administrador.
+          </p>
+        </div>
       </div>
     </div>
   );

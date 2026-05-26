@@ -35,8 +35,9 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className="font-sans antialiased">
+    // 🟢 Agregamos suppressHydrationWarning aquí para blindar toda la estructura contra extensiones invasivas como ColorZilla
+    <html lang="es" suppressHydrationWarning={true}>
+      <body className="font-sans antialiased bg-background text-foreground min-h-screen">
         {children}
         <Analytics />
       </body>
