@@ -28,13 +28,13 @@ interface SidebarProps {
 }
 
 const allMenuItems = [
-  { id: "dashboard" as const, label: "Dashboard", icon: LayoutDashboard, code: "CU-08", roles: ["ADMIN", "TESORERO", "ENCARGADO"] },
-  { id: "usuarios" as const, label: "Gestión de Usuarios", icon: Users, code: "CU-01", roles: ["ADMIN"] },
-  { id: "familias" as const, label: "Familias y Servicio", icon: Home, code: "CU-02", roles: ["ADMIN", "TESORERO"] },
-  { id: "pagos" as const, label: "Pagos y Morosidad", icon: CreditCard, code: "CU-05", roles: ["ADMIN", "TESORERO"] },
-  { id: "tanque" as const, label: "Control de Tanque", icon: Droplets, code: "CU-03", roles: ["ADMIN", "ENCARGADO"] },
-  { id: "distribucion" as const, label: "Distribución", icon: GitBranch, code: "CU-04", roles: ["ADMIN", "ENCARGADO"] },
-  { id: "incidencias" as const, label: "Incidencias", icon: AlertTriangle, code: "CU-06", roles: ["ADMIN", "TESORERO", "ENCARGADO"] },
+  { id: "dashboard" as const, label: "Dashboard", icon: LayoutDashboard, roles: ["ADMIN", "TESORERO", "ENCARGADO"] },
+  { id: "usuarios" as const, label: "Gestión de Usuarios", icon: Users, roles: ["ADMIN"] },
+  { id: "familias" as const, label: "Familias y Servicio", icon: Home, roles: ["ADMIN", "TESORERO"] },
+  { id: "pagos" as const, label: "Pagos y Morosidad", icon: CreditCard, roles: ["ADMIN", "TESORERO"] },
+  { id: "tanque" as const, label: "Control de Tanque", icon: Droplets, roles: ["ADMIN", "ENCARGADO"] },
+  { id: "distribucion" as const, label: "Distribución", icon: GitBranch, roles: ["ADMIN", "ENCARGADO"] },
+  { id: "incidencias" as const, label: "Incidencias", icon: AlertTriangle, roles: ["ADMIN", "TESORERO", "ENCARGADO"] },
 ]
 
 const roleLabels: Record<string, { label: string, icon: any, color: string }> = {
