@@ -17,8 +17,8 @@ import {
 import { cn } from "@/lib/utils"
 import type { ViewType, User } from "@/app/page"
 import { Button } from "@/components/ui/button"
-// 🟢 Corregimos la ruta apuntando al nombre de archivo exacto y actual en minúsculas
-import { IconoMenu } from '@/components/logos-sistemas';
+// 🟢 Importamos ambas variantes desde el archivo de logotipos
+import { IconoMenu, IconoMenuAdmin } from '@/components/logos-sistemas';
 
 interface SidebarProps {
   currentView: ViewType
@@ -52,19 +52,30 @@ const roleLabels: Record<string, { label: string, icon: any, color: string }> = 
 }
 
 export function Sidebar({ currentView, onNavigate, user, onLogout }: SidebarProps) {
-  const userRoleStr = user?.role || "FAMILIA"
-  const menuItems = allMenuItems.filter(item => item.roles.includes(userRoleStr.toUpperCase()))
-  const roleInfo = roleLabels[userRoleStr] || roleLabels[userRoleStr.toUpperCase()] || roleLabels.FAMILIA
+  // 🟢 CORRECCIÓN CLAVE: Buscamos tanto 'role' como 'rol' y lo pasamos a mayúsculas limpias
+  const roleClean = (user?.role || user?.rol || "FAMILIA").toUpperCase().trim();
+  
+  const menuItems = allMenuItems.filter(item => item.roles.includes(roleClean))
+  const roleInfo = roleLabels[roleClean] || roleLabels.FAMILIA
   const RoleIcon = roleInfo.icon
+
+  // 🟢 Evaluamos con el rol normalizado si pertenece a la administración
+  const esAdministrativo = 
+    roleClean === "ADMIN" || 
+    roleClean === "TESORERO" || 
+    roleClean === "ENCARGADO";
 
   return (
     <aside className="w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border flex flex-col">
       <div className="p-6 border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center">
           
-          {/* 🟢 REEMPLAZO LOGRADO: Quitamos la caja con el Droplet gris y ponemos tu logo interactivo */}
-          <IconoMenu />
-          
+          {/* 🟢 INTERCAMBIO DINÁMICO: Si es administrativo renderiza la blanca, si no la estándar azul */}
+          {esAdministrativo ? (
+            <IconoMenuAdmin />
+          ) : (
+            <IconoMenu />
+          )}
           
         </div>
       </div>
