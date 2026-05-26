@@ -39,16 +39,19 @@ export default function LoginPage() {
     // Contenedor principal sin bordes raros que ocupa toda la pantalla
     <div className="min-h-screen w-screen flex bg-background font-sans antialiased">
       
-      {/* 🟢 LADO IZQUIERDO: Panel institucional premium (Se oculta en celulares automágicamente con 'hidden md:flex') */}
+      {/* 🟢 LADO IZQUIERDO: Panel institucional premium */}
       <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-cyan-700 via-cyan-600 to-[#0A1728] items-center justify-center p-12 relative overflow-hidden">
         {/* Efecto de fondo abstracto de agua */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent)] pointer-events-none" />
         
         <div className="max-w-md text-center text-white space-y-6 z-10">
-          <div className="inline-block p-4 bg-white/10 backdrop-blur-md rounded-3xl border border-white/10 shadow-lg">
-            {/* Cargamos tu escudo oficial */}
+          
+          {/* 🔴 EL CAMBIO EXACTO: Contenedor modificado a blanco plano, nítido y elegante */}
+          <div className="inline-block p-5 bg-white rounded-2xl border border-slate-200 shadow-xl">
+            {/* Tu escudo oficial resalta perfectamente sobre el fondo blanco puro */}
             <EscudoLogin />
           </div>
+
           <div className="space-y-2">
             <h3 className="text-xl font-medium text-cyan-100">Portal de Servicios Digitales</h3>
             <p className="text-sm text-cyan-200/80 leading-relaxed">
@@ -62,10 +65,12 @@ export default function LoginPage() {
       <div className="w-full md:w-1/2 flex items-center justify-center p-8 bg-card">
         <div className="w-full max-w-sm space-y-8">
           
-          {/* Cabecera para móviles (solo visible si no está en desktop) */}
-          <div className="md:hidden text-center">
-            <EscudoLogin />
-            <div className="border-b border-border/60 my-6" />
+          {/* Cabecera para móviles con el mismo recuadro blanco plano para el escudo */}
+          <div className="md:hidden text-center flex flex-col items-center">
+            <div className="inline-block p-4 bg-white rounded-2xl border border-slate-200 shadow-sm mb-2">
+              <EscudoLogin />
+            </div>
+            <div className="border-b border-border/60 w-full my-4" />
           </div>
 
           <div className="space-y-2">
@@ -149,7 +154,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-cyan-600 text-white py-3 px-4 rounded-xl text-sm font-semibold hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-xs mt-2"
+              className="w-full bg-cyan-600 text-white py-3 px-4 rounded-xl text-sm font-semibold hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-xs mt-2 cursor-pointer"
             >
               {loading ? "Verificando cuenta..." : "Acceder al portal"}
             </button>
