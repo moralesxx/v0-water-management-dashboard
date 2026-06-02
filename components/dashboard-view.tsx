@@ -5,7 +5,7 @@ import { DelinquencyCard } from "./delinquency-card"
 import { DistributionSchedule } from "./distribution-schedule"
 import { QuickActions } from "./quick-actions"
 import { StatsOverview } from "./stats-overview"
-import type { ViewType } from "@/app/page"
+import type { ViewType } from "@/app/dashboard/page"
 
 interface DashboardViewProps {
   onNavigate: (view: ViewType) => void
