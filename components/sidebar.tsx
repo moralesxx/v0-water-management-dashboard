@@ -23,7 +23,7 @@ import { IconoMenu, IconoMenuAdmin } from '@/components/logos-sistemas';
 interface SidebarProps {
   currentView: ViewType
   onNavigate: (view: ViewType) => void
-  user: { role: string; username: string } //  CORRECCIÓN EN LÍNEA
+  user: { role?: string; username?: string; [key: string]: any } 
   onLogout: () => void
 }
 
