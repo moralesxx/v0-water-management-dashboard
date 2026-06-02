@@ -9,7 +9,7 @@ import {
   Settings,
   Zap
 } from "lucide-react"
-import type { ViewType } from "@/app/page" // Aseguramos que los tipos coincidan con tu layout
+import type { ViewType } from "@/app/dashboard/page";// Aseguramos que los tipos coincidan con tu layout
 
 // 1. Añadimos el destino "view" a cada acción de tu array
 const actions = [
