@@ -20,9 +20,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
 
-    if (usuarioLogueado.rol === Rol.FAMILIA) {
-      return NextResponse.json({ error: "Acceso denegado" }, { status: 403 })
-    }
+    // 🟢 CORREGIDO: Eliminamos el bloqueo 403 estricto para Rol.FAMILIA.
+    // Ahora tanto el personal administrativo como los usuarios del Portal Familiar pueden reportar fallas.
 
     const body = await req.json()
     const parsed = crearIncidenciaSchema.safeParse(body)
@@ -41,7 +40,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `El sector '${sectorNombre}' no existe` }, { status: 404 })
     }
 
-    // 2. Crear la incidencia mapeando exactamente a las columnas de tu BD
+    // 2. Crear la incidencia mapeando exactamente a las columnas de tu BD (asignando quién la reportó)
     const nuevaIncidencia = await prisma.incidencia.create({
       data: {
         descripcion: descripcion,
@@ -53,13 +52,13 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    // 3. Registrar en bitácora
+    // 3. Registrar la acción en la Bitácora de Auditoría para el control del sistema
     await prisma.bitacoraAuditoria.create({
       data: {
         accion: "REGISTRAR_INCIDENCIA",
         entidad: "Incidencia",
         entidadId: nuevaIncidencia.id,
-        detalles: { sectorNombre, urgencia, tipo },
+        detalles: { sectorNombre, urgencia, tipo, origen: "PORTAL_FAMILIAR" },
         usuarioId: usuarioLogueado.id,
       },
     })

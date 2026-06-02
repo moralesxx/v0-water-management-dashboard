@@ -231,20 +231,25 @@ export function IncidenciasView({ defaultSector = "", usuarioNombre = "Administr
                   </Select>
                 </div>
 
-                <div className="grid gap-2">
-                  <Label htmlFor="urgencia" className="font-medium text-slate-700">Urgencia</Label>
-                  <Select value={nuevaUrgencia} onValueChange={setNuevaUrgencia} required>
-                    <SelectTrigger id="urgencia" className="bg-background border-border text-foreground rounded-lg">
-                      <SelectValue placeholder="Nivel de Urgencia" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border-border text-foreground">
-                      <SelectItem value="BAJA">BAJA</SelectItem>
-                      <SelectItem value="MEDIA">MEDIA</SelectItem>
-                      <SelectItem value="ALTA">ALTA</SelectItem>
-                      <SelectItem value="CRITICA">CRITICA</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="urgencia" className="font-medium text-slate-700">Urgencia</Label>
+                      <Select 
+                        value={nuevaUrgencia} 
+                        onValueChange={setNuevaUrgencia} // 🟢 CORREGIDO: Debe ser setNuevaUrgencia
+                        required
+                      >
+                        <SelectTrigger id="urgencia" className="bg-background border-border text-foreground rounded-lg">
+                          <SelectValue placeholder="Nivel de Urgencia" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border-border text-foreground">
+                          <SelectItem value="BAJA">BAJA</SelectItem>
+                          <SelectItem value="MEDIA">MEDIA</SelectItem>
+                          <SelectItem value="ALTA">ALTA</SelectItem>
+                          <SelectItem value="CRITICA">CRITICA</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
                 <div className="grid gap-2">
                   <Label htmlFor="estado" className="font-medium text-slate-700">Estado Inicial</Label>
