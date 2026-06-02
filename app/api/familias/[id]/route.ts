@@ -5,11 +5,11 @@ import { prisma } from "@/lib/prisma"
 // ─── GET /api/familias/[id] ──────────────────────────────────────────────────
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } } // O Promise<{ id: string }> dependiendo de tu linter
+  context: { params: Promise<{ id: string }> } // TIPADO CORRECTO PARA NEXT.JS 16
 ) {
   try {
-    // CORRECCIÓN: Desempaquetar params con await obligatoriamente
-    const { id } = await params
+    // Desempaquetar params con await obligatoriamente
+    const { id } = await context.params
 
     const familia = await prisma.familia.findUnique({
       where: { id },
@@ -36,11 +36,11 @@ export async function GET(
 // ─── PATCH /api/familias/[id] ────────────────────────────────────────────────
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // TIPADO CORRECTO PARA NEXT.JS 16
 ) {
   try {
-    // CORRECCIÓN: Desempaquetar params con await para evitar el Error 500
-    const { id } = await params
+    // Desempaquetar params con await para evitar errores
+    const { id } = await context.params
     const body = await request.json()
 
     const familiaActualizada = await prisma.familia.update({
