@@ -32,7 +32,7 @@ export function PaymentsView() {
   })
   // Asume que "search" es la variable o estado donde guardas el texto del buscador de la tabla
 const handleExportar = () => {
-  const querySearch = buscar ? `&search=${encodeURIComponent(search)}` : "";
+  const querySearch = buscar ? `&search=${encodeURIComponent(buscar)}` : "";
   
   // Redirige nativamente al navegador para iniciar la descarga del archivo CSV
   window.location.href = `/api/pagos/morosidad?export=true${querySearch}`;
