@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Search, Plus, MoreHorizontal, UserCheck, UserX, Shield, Edit, Trash2, X, Loader2 } from "lucide-react"
+import { Search, Plus, MoreHorizontal, UserCheck, UserX, Shield, Edit, Trash2, X, Loader2, AlertTriangle } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 
 interface Usuario {
   id: string
@@ -24,22 +25,39 @@ const ROL_LABELS: Record<string, string> = {
   FAMILIA: "Familia",
 }
 
+// Sectores disponibles para el formulario de familia
+const SECTORES = [
+  { id: "", nombre: "Selecciona un sector" },
+  { id: "sector-a", nombre: "Sector A" },
+  { id: "sector-b", nombre: "Sector B" },
+  { id: "sector-c", nombre: "Sector C" },
+]
+
 export function UsuariosView() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [sectores, setSectores] = useState<{ id: string; nombre: string }[]>([])
 
   // Modal crear
   const [showModal, setShowModal] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [form, setForm] = useState({ nombre: "", email: "", password: "", rol: "ENCARGADO" })
+  const [form, setForm] = useState({
+    nombre: "", email: "", password: "", rol: "ENCARGADO",
+    // Campos extra para rol FAMILIA
+    direccion: "", telefono: "", sectorId: ""
+  })
 
   // Modal editar
   const [showEditModal, setShowEditModal] = useState(false)
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
   const [editForm, setEditForm] = useState({ id: "", nombre: "", email: "", rol: "ENCARGADO", activo: true })
+
+  // Dialog eliminar
+  const [usuarioAEliminar, setUsuarioAEliminar] = useState<Usuario | null>(null)
+  const [eliminando, setEliminando] = useState(false)
 
   async function cargarUsuarios() {
     setLoading(true)
@@ -54,22 +72,51 @@ export function UsuariosView() {
     }
   }
 
-  useEffect(() => { cargarUsuarios() }, [])
+  async function cargarSectores() {
+    try {
+      const res = await fetch("/api/sectores")
+      if (!res.ok) return
+      const data = await res.json()
+      setSectores(data.data ?? data ?? [])
+    } catch {}
+  }
 
+  useEffect(() => {
+    cargarUsuarios()
+    cargarSectores()
+  }, [])
+
+  // ── Crear usuario ──────────────────────────────────────────────────────────
   async function handleCrear(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
     setError(null)
     try {
+      const payload: Record<string, any> = {
+        nombre: form.nombre,
+        email: form.email,
+        password: form.password,
+        rol: form.rol,
+      }
+
+      // Si es FAMILIA, incluir los datos extra para crear la entrada en tabla familias
+      if (form.rol === "FAMILIA") {
+        if (!form.sectorId) { setError("Debes seleccionar un sector para la familia"); setSaving(false); return }
+        if (!form.direccion) { setError("La dirección es requerida para familias"); setSaving(false); return }
+        payload.direccion = form.direccion
+        payload.telefono = form.telefono
+        payload.sectorId = form.sectorId
+      }
+
       const res = await fetch("/api/usuarios", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? "Error al crear"); return }
       setShowModal(false)
-      setForm({ nombre: "", email: "", password: "", rol: "ENCARGADO" })
+      setForm({ nombre: "", email: "", password: "", rol: "ENCARGADO", direccion: "", telefono: "", sectorId: "" })
       cargarUsuarios()
     } catch {
       setError("Error de conexión")
@@ -78,6 +125,7 @@ export function UsuariosView() {
     }
   }
 
+  // ── Editar usuario ─────────────────────────────────────────────────────────
   function abrirEditar(u: Usuario) {
     setEditForm({ id: u.id, nombre: u.nombre, email: u.email, rol: u.rol, activo: u.activo })
     setEditError(null)
@@ -92,12 +140,7 @@ export function UsuariosView() {
       const res = await fetch(`/api/usuarios/${editForm.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nombre: editForm.nombre,
-          email: editForm.email,
-          rol: editForm.rol,
-          activo: editForm.activo,
-        }),
+        body: JSON.stringify({ nombre: editForm.nombre, email: editForm.email, rol: editForm.rol, activo: editForm.activo }),
       })
       const data = await res.json()
       if (!res.ok) { setEditError(data.error ?? "Error al editar"); return }
@@ -107,6 +150,23 @@ export function UsuariosView() {
       setEditError("Error de conexión")
     } finally {
       setEditSaving(false)
+    }
+  }
+
+  // ── Eliminar usuario ───────────────────────────────────────────────────────
+  async function handleEliminar() {
+    if (!usuarioAEliminar) return
+    setEliminando(true)
+    try {
+      const res = await fetch(`/api/usuarios/${usuarioAEliminar.id}`, { method: "DELETE" })
+      const data = await res.json()
+      if (!res.ok) { alert(data.error ?? "No se pudo eliminar"); return }
+      setUsuarioAEliminar(null)
+      cargarUsuarios()
+    } catch {
+      alert("Error de conexión")
+    } finally {
+      setEliminando(false)
     }
   }
 
@@ -180,18 +240,14 @@ export function UsuariosView() {
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-medium">
-                            {usuario.nombre.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                            {usuario.nombre.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
                           </div>
                           <span className="font-medium">{usuario.nombre}</span>
                         </div>
                       </td>
                       <td className="py-3 px-4 text-muted-foreground">{usuario.email}</td>
-                      <td className="py-3 px-4">
-                        <Badge variant={usuario.rol === "ADMIN" ? "default" : "secondary"}>{ROL_LABELS[usuario.rol] ?? usuario.rol}</Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge variant={usuario.activo ? "default" : "outline"}>{usuario.activo ? "Activo" : "Inactivo"}</Badge>
-                      </td>
+                      <td className="py-3 px-4"><Badge variant={usuario.rol === "ADMIN" ? "default" : "secondary"}>{ROL_LABELS[usuario.rol] ?? usuario.rol}</Badge></td>
+                      <td className="py-3 px-4"><Badge variant={usuario.activo ? "default" : "outline"}>{usuario.activo ? "Activo" : "Inactivo"}</Badge></td>
                       <td className="py-3 px-4 text-muted-foreground text-sm">{new Date(usuario.createdAt).toLocaleDateString("es-GT")}</td>
                       <td className="py-3 px-4 text-right">
                         <DropdownMenu>
@@ -202,7 +258,10 @@ export function UsuariosView() {
                             <DropdownMenuItem className="gap-2" onClick={() => abrirEditar(usuario)}>
                               <Edit className="w-4 h-4" /> Editar
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2 text-destructive">
+                            <DropdownMenuItem
+                              className="gap-2 text-destructive focus:text-destructive"
+                              onClick={() => setUsuarioAEliminar(usuario)}
+                            >
                               <Trash2 className="w-4 h-4" /> Eliminar
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -217,10 +276,32 @@ export function UsuariosView() {
         </CardContent>
       </Card>
 
-      {/* Modal Crear */}
+      {/* ── Dialog confirmación eliminar ── */}
+      <AlertDialog open={!!usuarioAEliminar} onOpenChange={open => { if (!open) setUsuarioAEliminar(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" /> ¿Eliminar usuario?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Estás a punto de eliminar a <strong>{usuarioAEliminar?.nombre}</strong> ({usuarioAEliminar?.email}).
+              Esta acción no se puede deshacer y quedará registrada en la bitácora.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={eliminando}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleEliminar} disabled={eliminando} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {eliminando ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Sí, eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Modal Crear ── */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md shadow-xl">
+          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold">Nuevo Usuario</h2>
               <button onClick={() => setShowModal(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
@@ -247,17 +328,44 @@ export function UsuariosView() {
                   <option value="FAMILIA">Familia</option>
                 </select>
               </div>
+
+              {/* Campos extra solo para rol FAMILIA */}
+              {form.rol === "FAMILIA" && (
+                <div className="space-y-4 pt-2 border-t border-border">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Datos de la familia</p>
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">Dirección</label>
+                    <Input value={form.direccion} onChange={e => setForm(p => ({ ...p, direccion: e.target.value }))} placeholder="Calle principal #12" required />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">Teléfono (opcional)</label>
+                    <Input value={form.telefono} onChange={e => setForm(p => ({ ...p, telefono: e.target.value }))} placeholder="5555-1234" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">Sector</label>
+                    <select value={form.sectorId} onChange={e => setForm(p => ({ ...p, sectorId: e.target.value }))} className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" required>
+                      <option value="">Selecciona un sector</option>
+                      {sectores.map(s => (
+                        <option key={s.id} value={s.id}>{s.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
               {error && <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2"><p className="text-sm text-destructive">{error}</p></div>}
               <div className="flex gap-3 pt-2">
                 <Button type="button" variant="outline" className="flex-1" onClick={() => setShowModal(false)}>Cancelar</Button>
-                <Button type="submit" className="flex-1" disabled={saving}>{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Crear Usuario"}</Button>
+                <Button type="submit" className="flex-1" disabled={saving}>
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Crear Usuario
+                </Button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Modal Editar */}
+      {/* ── Modal Editar ── */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md shadow-xl">
@@ -293,7 +401,9 @@ export function UsuariosView() {
               {editError && <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2"><p className="text-sm text-destructive">{editError}</p></div>}
               <div className="flex gap-3 pt-2">
                 <Button type="button" variant="outline" className="flex-1" onClick={() => setShowEditModal(false)}>Cancelar</Button>
-                <Button type="submit" className="flex-1" disabled={editSaving}>{editSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar cambios"}</Button>
+                <Button type="submit" className="flex-1" disabled={editSaving}>
+                  {editSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Guardar cambios
+                </Button>
               </div>
             </form>
           </div>

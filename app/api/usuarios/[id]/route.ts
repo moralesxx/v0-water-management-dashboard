@@ -74,3 +74,48 @@ export async function PATCH(
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }
+// ─── DELETE /api/usuarios/[id] ────────────────────────────────────────────────
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const admin = await verificarAdmin(req);
+  if (!admin) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
+  try {
+    const { id } = await params;
+
+    if (id === admin.id) {
+      return NextResponse.json({ error: "No puedes eliminar tu propia cuenta" }, { status: 400 });
+    }
+
+    const usuario = await prisma.usuario.findUnique({ where: { id } });
+    if (!usuario) {
+      return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
+    }
+
+    await prisma.bitacoraAuditoria.create({
+      data: {
+        accion: "ELIMINAR_USUARIO",
+        entidad: "Usuario",
+        entidadId: id,
+        detalles: { nombre: usuario.nombre, email: usuario.email, rol: usuario.rol } as any,
+        usuarioId: admin.id as string,
+      },
+    });
+
+    // Primero eliminar registros relacionados
+    await prisma.bitacoraAuditoria.deleteMany({ where: { usuarioId: id } });
+    await prisma.familia.deleteMany({ where: { usuarioId: id } });
+
+    // Luego eliminar el usuario
+    await prisma.usuario.delete({ where: { id } });
+
+    return NextResponse.json({ ok: true, mensaje: "Usuario eliminado correctamente" });
+  } catch (error) {
+    console.error("[DELETE /api/usuarios/:id]", error);
+    return NextResponse.json({ error: "Error al eliminar el usuario" }, { status: 500 });
+  }
+}

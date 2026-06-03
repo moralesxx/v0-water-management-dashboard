@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
       ).length
 
       // Si no hay meses registrados en la BD, dejamos la simulación controlada que tenías
-      const months = mesesEnMora > 0 ? mesesEnMora : Math.floor(Math.random() * 3) + 1
+      const months = mesesEnMora
 
       return {
         id: familia.id,
