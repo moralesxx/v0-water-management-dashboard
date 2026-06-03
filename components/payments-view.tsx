@@ -32,7 +32,7 @@ export function PaymentsView() {
   })
   // Asume que "search" es la variable o estado donde guardas el texto del buscador de la tabla
 const handleExportar = () => {
-  const querySearch = buscar ? `&search=${encodeURIComponent(search)}` : "";
+  const querySearch = buscar ? `&search=${encodeURIComponent(buscar)}` : "";
   
   // Redirige nativamente al navegador para iniciar la descarga del archivo CSV
   window.location.href = `/api/pagos/morosidad?export=true${querySearch}`;
@@ -208,7 +208,7 @@ const handleExportar = () => {
               {/* Navegación por páginas */}
               <div className="flex items-center justify-between pt-4 border-t border-border">
                 <p className="text-sm text-muted-foreground">
-                  Página <span className="font-medium">{paginacionInfo.page}</span> de{" "}
+                  Página <span className="font-medium">{(paginacionInfo as any).page}</span> de{" "}
                   <span className="font-medium">{paginacionInfo.totalPages}</span> ({paginacionInfo.total} familias acumuladas)
                 </p>
                 <div className="flex items-center gap-2">

@@ -15,7 +15,7 @@ import {
   Zap 
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { ViewType, User } from "@/app/page"
+import type { ViewType } from "@/app/dashboard/page";
 import { Button } from "@/components/ui/button"
 // 🟢 Importamos ambas variantes desde el archivo de logotipos
 import { IconoMenu, IconoMenuAdmin } from '@/components/logos-sistemas';
@@ -23,7 +23,7 @@ import { IconoMenu, IconoMenuAdmin } from '@/components/logos-sistemas';
 interface SidebarProps {
   currentView: ViewType
   onNavigate: (view: ViewType) => void
-  user: User
+  user: { role?: string; username?: string; [key: string]: any } 
   onLogout: () => void
 }
 

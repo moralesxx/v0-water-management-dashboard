@@ -12,7 +12,8 @@ import {
   Clock,
   FileText,
   Download,
-  Droplet
+  Droplet,
+  Loader2
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -61,6 +62,7 @@ interface FamiliaDashboardProps {
 export function FamiliaDashboard({ user, onLogout }: FamiliaDashboardProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [guardando, setGuardando] = useState(false); // 🟢 Estado para controlar el spinner de envío
 
   // Estados para el reporte de incidencia directa
   const [nuevaDescripcion, setNuevaDescripcion] = useState("");
@@ -77,18 +79,22 @@ export function FamiliaDashboard({ user, onLogout }: FamiliaDashboardProps) {
     { fecha: "Martes 26 May", horario: "8:00 - 12:00", estado: "programado" },
   ];
 
-  // 🟢 2. CONFIGURACIÓN DEL PERFIL DE LA SESIÓN
-  const familyProfile = {
-    codigo: user?.codigoFamilia || user?.codigo || "FAM-2026-0042",
-    nombre: user?.nombre || user?.username || "Familia García López",
-    sector: user?.sectorNombre || user?.sector || "Sector Norte",
-    direccion: user?.direccion || "Calle Principal #123",
-    estadoServicio: user?.activo !== false ? "Activo" : "Suspendido",
-    saldoPendiente: typeof user?.balance === "number" ? user.balance : 0,
-    ultimoPago: user?.fechaUltimoPago || "15 Feb 2026",
-  };
+  
+const familyProfile = {
+  codigo: user?.codigoFamilia || user?.codigo || "FAM-2026-0042",
+  nombre: user?.nombre || user?.username || "Familia García López",
+  
+  // 🟢 CORRECCIÓN CLAVE: Si la base de datos no le manda un sector al usuario, 
+  // cae por defecto en "Sector A" (que sí existe en tu tabla en vez de "Sector Centro")
+  sector: user?.sectorNombre || user?.sector || "Sector A", 
+  
+  direccion: user?.direccion || "Calle Principal #123",
+  estadoServicio: user?.activo !== false ? "Activo" : "Suspendido",
+  saldoPendiente: typeof user?.balance === "number" ? user.balance : 0,
+  ultimoPago: user?.fechaUltimoPago || "15 Feb 2026",
+};
 
-  // 🟢 3. FUNCIONES CONTROLADORAS DE EVENTOS (Están arriba del return para evitar ReferenceError)
+  
   const handleDownloadEstado = () => { 
     window.print(); 
   };
@@ -115,6 +121,7 @@ export function FamiliaDashboard({ user, onLogout }: FamiliaDashboardProps) {
 
   const handleCrearIncidencia = async (e: React.FormEvent) => {
     e.preventDefault();
+    setGuardando(true);
     try {
       const respuesta = await fetch("/api/incidencias", {
         method: "POST",
@@ -122,19 +129,26 @@ export function FamiliaDashboard({ user, onLogout }: FamiliaDashboardProps) {
         body: JSON.stringify({
           descripcion: nuevaDescripcion,
           sectorNombre: familyProfile.sector, 
-          type: nuevoTipo,
+          tipo: nuevoTipo, // 🟢 CORREGIDO: 'tipo' en lugar de 'type' para coincidir con la API
           urgencia: nuevaUrgencia,
           estado: "ABIERTA"
         })
       });
 
-      if (!respuesta.ok) throw new Error();
-      alert("¡Reporte técnico enviado con éxito a la administración!");
+      const data = await respuesta.json();
+
+      if (!respuesta.ok) {
+        throw new Error(data.error || "Error en el servidor");
+      }
+
+      alert("¡Reporte técnico enviado y guardado con éxito en el sistema!");
       setIsDialogOpen(false);
       setNuevaDescripcion("");
-    } catch (error) {
-      alert("Reporte guardado de forma local correctamente.");
-      setIsDialogOpen(false);
+    } catch (error: any) {
+      console.error("Error en el envío:", error);
+      alert(`No se pudo guardar en Supabase: ${error.message || "Error de red"}`);
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -347,7 +361,7 @@ export function FamiliaDashboard({ user, onLogout }: FamiliaDashboardProps) {
                   </DialogDescription>
                 </DialogHeader>
 
-                <div className="grid gap-4 py-4 text-slate-200">
+                <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
                     <Label htmlFor="tipo" className="text-slate-700">Tipo de Avería</Label>
                     <Select value={nuevoTipo} onValueChange={setNuevoTipo} required>
@@ -364,15 +378,20 @@ export function FamiliaDashboard({ user, onLogout }: FamiliaDashboardProps) {
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="urgencia" className="text-slate-700">Urgencia</Label>
-                    <Select value={nuevaUrgencia} onValueChange={nuevaUrgencia} required>
+                    <Label htmlFor="urgencia" className="text-slate-700 font-medium">Urgencia</Label>
+                    <Select 
+                      value={nuevaUrgencia} 
+                      onValueChange={setNuevaUrgencia} 
+                      required
+                    >
                       <SelectTrigger id="urgencia" className="bg-white border-border text-slate-900 rounded-lg">
                         <SelectValue placeholder="Nivel de Urgencia" />
                       </SelectTrigger>
                       <SelectContent className="bg-white border-border text-slate-900">
                         <SelectItem value="BAJA">BAJA</SelectItem>
                         <SelectItem value="MEDIA">MEDIA</SelectItem>
-                        <SelectItem value="ALTA">ALTA / URGENTE</SelectItem>
+                        <SelectItem value="ALTA">ALTA</SelectItem>
+                        <SelectItem value="CRITICA">CRÍTICA</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -394,7 +413,10 @@ export function FamiliaDashboard({ user, onLogout }: FamiliaDashboardProps) {
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="border-border text-slate-700 hover:bg-slate-50 rounded-lg">
                     Cancelar
                   </Button>
-                  <Button type="submit" className="bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg">Enviar Reporte</Button>
+                  <Button type="submit" disabled={guardando} className="bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg flex items-center gap-2 justify-center min-w-[120px]">
+                    {guardando && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    {guardando ? "Enviando..." : "Enviar Reporte"}
+                  </Button>
                 </DialogFooter>
               </form>
             </DialogContent>

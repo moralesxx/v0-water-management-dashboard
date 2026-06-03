@@ -1,7 +1,7 @@
 "use client"
 import { useRouter } from "next/navigation";
 import { DashboardView } from "./dashboard-view";
-import type { ViewType } from "@/app/page";
+import type { ViewType } from "@/app/dashboard/page";
 
 export function DashboardWrapper() {
   const router = useRouter();

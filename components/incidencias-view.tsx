@@ -9,39 +9,18 @@ import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  Search,
-  Plus,
-  MoreHorizontal,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Eye,
-  Edit,
-  Loader2,
-  ChevronLeft,
-  ChevronRight,
+  Search, Plus, MoreHorizontal, AlertTriangle, CheckCircle,
+  Clock, Eye, Edit, Loader2, ChevronLeft, ChevronRight,
 } from "lucide-react"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogFooter,
+  DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
 
 interface IncidenciasViewProps {
@@ -63,15 +42,10 @@ export function IncidenciasView({ defaultSector = "", usuarioNombre = "Administr
   const [nuevaUrgencia, setNuevaUrgencia] = useState("MEDIA")
   const [nuevoEstado, setNuevoEstado] = useState("ABIERTA")
 
-  // ── Cargar incidencias desde la API ─────────────────────────────────────────
   const fetchIncidencias = async () => {
     setLoading(true)
     try {
-      const params = new URLSearchParams({
-        search: searchTerm,
-        page: pagina.toString(),
-        limit: "10",
-      })
+      const params = new URLSearchParams({ search: searchTerm, page: pagina.toString(), limit: "10" })
       const res = await fetch(`/api/incidencias?${params.toString()}`)
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
@@ -116,37 +90,27 @@ export function IncidenciasView({ defaultSector = "", usuarioNombre = "Administr
     }
   }
 
-  // ── Crear incidencia ─────────────────────────────────────────────────────────
   const handleCrearIncidencia = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!nuevoSector) return
-
     try {
       const respuesta = await fetch("/api/incidencias", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          descripcion: nuevaDescripcion,
-          sectorNombre: nuevoSector,
-          tipo: nuevoTipo,
-          urgencia: nuevaUrgencia,
-          estado: nuevoEstado,
-        }),
+        body: JSON.stringify({ descripcion: nuevaDescripcion, sectorNombre: nuevoSector, tipo: nuevoTipo, urgencia: nuevaUrgencia, estado: nuevoEstado }),
       })
-
       if (!respuesta.ok) {
         const errorData = await respuesta.json()
         alert(errorData.error || "Error al registrar la incidencia")
         return
       }
-
       setIsDialogOpen(false)
       setNuevaDescripcion("")
       setNuevoTipo("FUGA")
       setNuevaUrgencia("MEDIA")
       setNuevoEstado("ABIERTA")
       setPagina(1)
-      fetchIncidencias() // Recargar desde la BD
+      fetchIncidencias()
     } catch {
       alert("No se pudo conectar con el servidor")
     }
@@ -163,8 +127,7 @@ export function IncidenciasView({ defaultSector = "", usuarioNombre = "Administr
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-xl shadow-2xs transition-colors">
-              <Plus className="w-4 h-4" />
-              Nueva Incidencia
+              <Plus className="w-4 h-4" /> Nueva Incidencia
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px] bg-card text-foreground border-border rounded-2xl shadow-lg">
@@ -233,14 +196,7 @@ export function IncidenciasView({ defaultSector = "", usuarioNombre = "Administr
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="descripcion" className="font-medium text-slate-700">Descripción y Detalles</Label>
-                  <Textarea
-                    id="descripcion"
-                    value={nuevaDescripcion}
-                    onChange={(e) => setNuevaDescripcion(e.target.value)}
-                    placeholder="Describe los detalles de la incidencia..."
-                    className="min-h-[80px] bg-background border-border text-foreground rounded-lg"
-                    required
-                  />
+                  <Textarea id="descripcion" value={nuevaDescripcion} onChange={(e) => setNuevaDescripcion(e.target.value)} placeholder="Describe los detalles de la incidencia..." className="min-h-[80px] bg-background border-border text-foreground rounded-lg" required />
                 </div>
               </div>
               <DialogFooter>
@@ -257,18 +213,11 @@ export function IncidenciasView({ defaultSector = "", usuarioNombre = "Administr
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <CardTitle className="text-slate-900 text-base font-semibold">Registro de Incidencias</CardTitle>
-              <CardDescription className="text-xs">
-                Historial de alertas técnicas — {paginacionInfo.total} registros en total
-              </CardDescription>
+              <CardDescription className="text-xs">Historial de alertas técnicas — {paginacionInfo.total} registros en total</CardDescription>
             </div>
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar incidencia..."
-                value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setPagina(1) }}
-                className="pl-9 bg-background border-border text-foreground rounded-xl text-sm"
-              />
+              <Input placeholder="Buscar incidencia..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setPagina(1) }} className="pl-9 bg-background border-border text-foreground rounded-xl text-sm" />
             </div>
           </div>
         </CardHeader>
@@ -287,21 +236,15 @@ export function IncidenciasView({ defaultSector = "", usuarioNombre = "Administr
                 const prioridadInfo = getPrioridadInfo(incidencia.urgencia)
                 const EstadoIcon = estadoInfo.icon
                 const fechaStr = new Date(incidencia.createdAt).toISOString().replace("T", " ").slice(0, 16)
-
                 return (
                   <div key={incidencia.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-slate-50 transition-colors">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="font-mono text-[10px] text-slate-500 font-bold px-2 py-0.5 rounded bg-white border border-border shadow-3xs">
-                            {incidencia.id.slice(-7).toUpperCase()}
-                          </span>
-                          <Badge className={`${prioridadInfo.color} border-none font-medium text-[10px]`} variant="secondary">
-                            {prioridadInfo.label}
-                          </Badge>
+                          <span className="font-mono text-[10px] text-slate-500 font-bold px-2 py-0.5 rounded bg-white border border-border shadow-3xs">{incidencia.id.slice(-7).toUpperCase()}</span>
+                          <Badge className={`${prioridadInfo.color} border-none font-medium text-[10px]`} variant="secondary">{prioridadInfo.label}</Badge>
                           <Badge className={`${estadoInfo.color} border-none font-medium text-[10px]`} variant="secondary">
-                            <EstadoIcon className="w-3 h-3 mr-1 inline" />
-                            {estadoInfo.label}
+                            <EstadoIcon className="w-3 h-3 mr-1 inline" />{estadoInfo.label}
                           </Badge>
                         </div>
                         <h3 className="font-semibold text-slate-900 text-base">{incidencia.tipo}</h3>
@@ -314,37 +257,23 @@ export function IncidenciasView({ defaultSector = "", usuarioNombre = "Administr
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground hover:bg-slate-100 rounded-lg">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
+                          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground hover:bg-slate-100 rounded-lg"><MoreHorizontal className="w-4 h-4" /></Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-card border-border text-foreground">
-                          <DropdownMenuItem className="gap-2 hover:bg-slate-50 cursor-pointer text-sm">
-                            <Eye className="w-4 h-4 text-cyan-600" /> Ver Detalles
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2 hover:bg-slate-50 cursor-pointer text-sm">
-                            <Edit className="w-4 h-4 text-amber-500" /> Editar Estado
-                          </DropdownMenuItem>
+                          <DropdownMenuItem className="gap-2 hover:bg-slate-50 cursor-pointer text-sm"><Eye className="w-4 h-4 text-cyan-600" /> Ver Detalles</DropdownMenuItem>
+                          <DropdownMenuItem className="gap-2 hover:bg-slate-50 cursor-pointer text-sm"><Edit className="w-4 h-4 text-amber-500" /> Editar Estado</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
                   </div>
                 )
               })}
-
-              {/* Paginación */}
               {paginacionInfo.totalPages > 1 && (
                 <div className="flex items-center justify-between border-t border-border pt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Página <strong>{pagina}</strong> de <strong>{paginacionInfo.totalPages}</strong>
-                  </p>
+                  <p className="text-sm text-muted-foreground">Página <strong>{pagina}</strong> de <strong>{paginacionInfo.totalPages}</strong></p>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setPagina(p => Math.max(1, p - 1))} disabled={pagina === 1}>
-                      <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => setPagina(p => Math.min(paginacionInfo.totalPages, p + 1))} disabled={pagina === paginacionInfo.totalPages}>
-                      Siguiente <ChevronRight className="w-4 h-4 ml-1" />
-                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setPagina(p => Math.max(1, p - 1))} disabled={pagina === 1}><ChevronLeft className="w-4 h-4 mr-1" /> Anterior</Button>
+                    <Button variant="outline" size="sm" onClick={() => setPagina(p => Math.min(paginacionInfo.totalPages, p + 1))} disabled={pagina === paginacionInfo.totalPages}>Siguiente <ChevronRight className="w-4 h-4 ml-1" /></Button>
                   </div>
                 </div>
               )}

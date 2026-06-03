@@ -308,7 +308,7 @@ export function FamiliasView() {
               {/* BARRA DE PAGINACIÓN COMPATIBLE CON EL BACKEND */}
               <div className="flex items-center justify-between border-t border-border pt-4">
                 <p className="text-sm text-muted-foreground">
-                  Página <span className="font-medium">{paginacionInfo.page}</span> de{" "}
+                  Página <span className="font-medium">{(paginacionInfo as any).page}</span> de{" "}
                   <span className="font-medium">{paginacionInfo.totalPages}</span> ({paginacionInfo.total} registros en total)
                 </p>
                 <div className="flex items-center gap-2">
