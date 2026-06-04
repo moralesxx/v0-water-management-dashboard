@@ -1,6 +1,7 @@
 // app/api/usuarios/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 import { jwtVerify } from "jose";
 import { z } from "zod";
 
@@ -22,11 +23,13 @@ const editarSchema = z.object({
   email: z.string().email().optional(),
   rol: z.enum(["ADMIN", "TESORERO", "ENCARGADO", "FAMILIA"]).optional(),
   activo: z.boolean().optional(),
+  password: z.string().min(8).optional(), // Para cambio de contraseña
 });
 
+// ─── PATCH /api/usuarios/[id] ─────────────────────────────────────────────────
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> } // <-- CAMBIO: Tipado como promesa
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const admin = await verificarAdmin(req);
   if (!admin) {
@@ -34,46 +37,43 @@ export async function PATCH(
   }
 
   try {
-    // CORRECCIÓN 1: Desempaquetar params asíncronamente para evitar que id sea undefined
     const { id } = await params;
-
     const body = await req.json();
     const data = editarSchema.parse(body);
 
+    // Si viene password, hashearla y guardar como passwordHash
+    const updateData: Record<string, any> = { ...data }
+    if (data.password) {
+      updateData.passwordHash = await bcrypt.hash(data.password, 12)
+      delete updateData.password
+    }
+
     const usuario = await prisma.usuario.update({
-      where: { id: id }, // <-- CAMBIO: Usamos el id desempaquetado
-      data,
-      select: {
-        id: true,
-        nombre: true,
-        email: true,
-        rol: true,
-        activo: true,
-        createdAt: true,
-      },
+      where: { id },
+      data: updateData,
+      select: { id: true, nombre: true, email: true, rol: true, activo: true, createdAt: true },
     });
 
     await prisma.bitacoraAuditoria.create({
       data: {
-        accion: "EDITAR_USUARIO",
+        accion: data.password ? "CAMBIAR_CONTRASENA" : "EDITAR_USUARIO",
         entidad: "Usuario",
         entidadId: usuario.id,
-        detalles: data as any,
+        detalles: data.password ? { accion: "Contraseña actualizada" } as any : data as any,
         usuarioId: admin.id as string,
       },
     });
 
-    // CORRECCIÓN 2: Envolver la respuesta en { data: usuario } para que sea compatible con tu frontend
     return NextResponse.json({ data: usuario });
-
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
     }
-    console.error("[EDITAR USUARIO]", error);
+    console.error("[PATCH /api/usuarios/:id]", error);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }
+
 // ─── DELETE /api/usuarios/[id] ────────────────────────────────────────────────
 export async function DELETE(
   req: NextRequest,
@@ -106,11 +106,8 @@ export async function DELETE(
       },
     });
 
-    // Primero eliminar registros relacionados
     await prisma.bitacoraAuditoria.deleteMany({ where: { usuarioId: id } });
     await prisma.familia.deleteMany({ where: { usuarioId: id } });
-
-    // Luego eliminar el usuario
     await prisma.usuario.delete({ where: { id } });
 
     return NextResponse.json({ ok: true, mensaje: "Usuario eliminado correctamente" });

@@ -1,3 +1,4 @@
+// app/dashboard/page.tsx
 "use client"
 import { useState, useEffect } from "react"
 import { Sidebar } from "@/components/sidebar"
@@ -73,8 +74,7 @@ export default function DashboardPage() {
   if (!usuario) return null
 
   if (usuario.rol === "FAMILIA") {
-    // 🔍 CORRECCIÓN AQUÍ: Agregamos "as any" para que TypeScript herede el objeto sin chistar en producción
-    return <FamiliaDashboard user={{ role: "FAMILIA", username: usuario.nombre } as any} onLogout={handleLogoutManual} />
+    return <FamiliaDashboard user={{ role: "FAMILIA", username: usuario.nombre }} onLogout={handleLogoutManual} />
   }
 
   const renderView = () => {
@@ -106,6 +106,7 @@ export default function DashboardPage() {
         <ToastNotification
           message="Sistema conectado a Supabase correctamente"
           onClose={() => setShowToast(false)}
+          onRevisar={() => setCurrentView("incidencias")}
         />
       )}
     </div>

@@ -42,6 +42,8 @@ interface User {
   id?: string;
   username?: string;
   nombre?: string;
+  role?: string;
+  rol?: string;
   codigoFamilia?: string;
   codigo?: string;
   sectorNombre?: string;

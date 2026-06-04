@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Search, Plus, MoreHorizontal, UserCheck, UserX, Shield, Edit, Trash2, X, Loader2, AlertTriangle } from "lucide-react"
+import { Search, Plus, MoreHorizontal, UserCheck, UserX, Shield, Edit, Trash2, X, Loader2, AlertTriangle, KeyRound } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 
@@ -25,14 +25,6 @@ const ROL_LABELS: Record<string, string> = {
   FAMILIA: "Familia",
 }
 
-// Sectores disponibles para el formulario de familia
-const SECTORES = [
-  { id: "", nombre: "Selecciona un sector" },
-  { id: "sector-a", nombre: "Sector A" },
-  { id: "sector-b", nombre: "Sector B" },
-  { id: "sector-c", nombre: "Sector C" },
-]
-
 export function UsuariosView() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [loading, setLoading] = useState(true)
@@ -43,17 +35,19 @@ export function UsuariosView() {
   const [showModal, setShowModal] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [form, setForm] = useState({
-    nombre: "", email: "", password: "", rol: "ENCARGADO",
-    // Campos extra para rol FAMILIA
-    direccion: "", telefono: "", sectorId: ""
-  })
+  const [form, setForm] = useState({ nombre: "", email: "", password: "", rol: "ENCARGADO", direccion: "", telefono: "", sectorId: "" })
 
   // Modal editar
   const [showEditModal, setShowEditModal] = useState(false)
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
   const [editForm, setEditForm] = useState({ id: "", nombre: "", email: "", rol: "ENCARGADO", activo: true })
+
+  // Modal cambiar contraseña
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [passwordSaving, setPasswordSaving] = useState(false)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [passwordForm, setPasswordForm] = useState({ id: "", nombre: "", nuevaPassword: "", confirmarPassword: "" })
 
   // Dialog eliminar
   const [usuarioAEliminar, setUsuarioAEliminar] = useState<Usuario | null>(null)
@@ -81,10 +75,7 @@ export function UsuariosView() {
     } catch {}
   }
 
-  useEffect(() => {
-    cargarUsuarios()
-    cargarSectores()
-  }, [])
+  useEffect(() => { cargarUsuarios(); cargarSectores() }, [])
 
   // ── Crear usuario ──────────────────────────────────────────────────────────
   async function handleCrear(e: React.FormEvent) {
@@ -92,14 +83,7 @@ export function UsuariosView() {
     setSaving(true)
     setError(null)
     try {
-      const payload: Record<string, any> = {
-        nombre: form.nombre,
-        email: form.email,
-        password: form.password,
-        rol: form.rol,
-      }
-
-      // Si es FAMILIA, incluir los datos extra para crear la entrada en tabla familias
+      const payload: Record<string, any> = { nombre: form.nombre, email: form.email, password: form.password, rol: form.rol }
       if (form.rol === "FAMILIA") {
         if (!form.sectorId) { setError("Debes seleccionar un sector para la familia"); setSaving(false); return }
         if (!form.direccion) { setError("La dirección es requerida para familias"); setSaving(false); return }
@@ -107,22 +91,13 @@ export function UsuariosView() {
         payload.telefono = form.telefono
         payload.sectorId = form.sectorId
       }
-
-      const res = await fetch("/api/usuarios", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
+      const res = await fetch("/api/usuarios", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? "Error al crear"); return }
       setShowModal(false)
       setForm({ nombre: "", email: "", password: "", rol: "ENCARGADO", direccion: "", telefono: "", sectorId: "" })
       cargarUsuarios()
-    } catch {
-      setError("Error de conexión")
-    } finally {
-      setSaving(false)
-    }
+    } catch { setError("Error de conexión") } finally { setSaving(false) }
   }
 
   // ── Editar usuario ─────────────────────────────────────────────────────────
@@ -137,20 +112,45 @@ export function UsuariosView() {
     setEditSaving(true)
     setEditError(null)
     try {
-      const res = await fetch(`/api/usuarios/${editForm.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre: editForm.nombre, email: editForm.email, rol: editForm.rol, activo: editForm.activo }),
-      })
+      const res = await fetch(`/api/usuarios/${editForm.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nombre: editForm.nombre, email: editForm.email, rol: editForm.rol, activo: editForm.activo }) })
       const data = await res.json()
       if (!res.ok) { setEditError(data.error ?? "Error al editar"); return }
       setShowEditModal(false)
       cargarUsuarios()
-    } catch {
-      setEditError("Error de conexión")
-    } finally {
-      setEditSaving(false)
+    } catch { setEditError("Error de conexión") } finally { setEditSaving(false) }
+  }
+
+  // ── Cambiar contraseña ─────────────────────────────────────────────────────
+  function abrirCambiarPassword(u: Usuario) {
+    setPasswordForm({ id: u.id, nombre: u.nombre, nuevaPassword: "", confirmarPassword: "" })
+    setPasswordError(null)
+    setShowPasswordModal(true)
+  }
+
+  async function handleCambiarPassword(e: React.FormEvent) {
+    e.preventDefault()
+    if (passwordForm.nuevaPassword !== passwordForm.confirmarPassword) {
+      setPasswordError("Las contraseñas no coinciden")
+      return
     }
+    if (passwordForm.nuevaPassword.length < 8) {
+      setPasswordError("La contraseña debe tener al menos 8 caracteres")
+      return
+    }
+    setPasswordSaving(true)
+    setPasswordError(null)
+    try {
+      const res = await fetch(`/api/usuarios/${passwordForm.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: passwordForm.nuevaPassword }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setPasswordError(data.error ?? "Error al cambiar contraseña"); return }
+      setShowPasswordModal(false)
+      setPasswordForm({ id: "", nombre: "", nuevaPassword: "", confirmarPassword: "" })
+      alert(`Contraseña de "${passwordForm.nombre}" actualizada correctamente`)
+    } catch { setPasswordError("Error de conexión") } finally { setPasswordSaving(false) }
   }
 
   // ── Eliminar usuario ───────────────────────────────────────────────────────
@@ -163,11 +163,7 @@ export function UsuariosView() {
       if (!res.ok) { alert(data.error ?? "No se pudo eliminar"); return }
       setUsuarioAEliminar(null)
       cargarUsuarios()
-    } catch {
-      alert("Error de conexión")
-    } finally {
-      setEliminando(false)
-    }
+    } catch { alert("Error de conexión") } finally { setEliminando(false) }
   }
 
   const filteredUsuarios = usuarios.filter(u =>
@@ -258,10 +254,10 @@ export function UsuariosView() {
                             <DropdownMenuItem className="gap-2" onClick={() => abrirEditar(usuario)}>
                               <Edit className="w-4 h-4" /> Editar
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="gap-2 text-destructive focus:text-destructive"
-                              onClick={() => setUsuarioAEliminar(usuario)}
-                            >
+                            <DropdownMenuItem className="gap-2" onClick={() => abrirCambiarPassword(usuario)}>
+                              <KeyRound className="w-4 h-4" /> Cambiar contraseña
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-2 text-destructive focus:text-destructive" onClick={() => setUsuarioAEliminar(usuario)}>
                               <Trash2 className="w-4 h-4" /> Eliminar
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -276,23 +272,19 @@ export function UsuariosView() {
         </CardContent>
       </Card>
 
-      {/* ── Dialog confirmación eliminar ── */}
+      {/* ── Dialog confirmar eliminar ── */}
       <AlertDialog open={!!usuarioAEliminar} onOpenChange={open => { if (!open) setUsuarioAEliminar(null) }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-destructive" /> ¿Eliminar usuario?
-            </AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-destructive" /> ¿Eliminar usuario?</AlertDialogTitle>
             <AlertDialogDescription>
-              Estás a punto de eliminar a <strong>{usuarioAEliminar?.nombre}</strong> ({usuarioAEliminar?.email}).
-              Esta acción no se puede deshacer y quedará registrada en la bitácora.
+              Estás a punto de eliminar a <strong>{usuarioAEliminar?.nombre}</strong> ({usuarioAEliminar?.email}). Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={eliminando}>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleEliminar} disabled={eliminando} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {eliminando ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Sí, eliminar
+              {eliminando ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Sí, eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -307,18 +299,9 @@ export function UsuariosView() {
               <button onClick={() => setShowModal(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleCrear} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1.5">Nombre completo</label>
-                <Input value={form.nombre} onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))} placeholder="Juan Pérez" required />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1.5">Correo electrónico</label>
-                <Input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} placeholder="usuario@sanmiguel.com" required />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1.5">Contraseña</label>
-                <Input type="password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} placeholder="Mínimo 8 caracteres" required minLength={8} />
-              </div>
+              <div><label className="block text-sm font-medium mb-1.5">Nombre completo</label><Input value={form.nombre} onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))} placeholder="Juan Pérez" required /></div>
+              <div><label className="block text-sm font-medium mb-1.5">Correo electrónico</label><Input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} placeholder="usuario@sanmiguel.com" required /></div>
+              <div><label className="block text-sm font-medium mb-1.5">Contraseña</label><Input type="password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} placeholder="Mínimo 8 caracteres" required minLength={8} /></div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Rol</label>
                 <select value={form.rol} onChange={e => setForm(p => ({ ...p, rol: e.target.value }))} className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
@@ -328,37 +311,24 @@ export function UsuariosView() {
                   <option value="FAMILIA">Familia</option>
                 </select>
               </div>
-
-              {/* Campos extra solo para rol FAMILIA */}
               {form.rol === "FAMILIA" && (
                 <div className="space-y-4 pt-2 border-t border-border">
                   <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Datos de la familia</p>
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5">Dirección</label>
-                    <Input value={form.direccion} onChange={e => setForm(p => ({ ...p, direccion: e.target.value }))} placeholder="Calle principal #12" required />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5">Teléfono (opcional)</label>
-                    <Input value={form.telefono} onChange={e => setForm(p => ({ ...p, telefono: e.target.value }))} placeholder="5555-1234" />
-                  </div>
+                  <div><label className="block text-sm font-medium mb-1.5">Dirección</label><Input value={form.direccion} onChange={e => setForm(p => ({ ...p, direccion: e.target.value }))} placeholder="Calle principal #12" required /></div>
+                  <div><label className="block text-sm font-medium mb-1.5">Teléfono (opcional)</label><Input value={form.telefono} onChange={e => setForm(p => ({ ...p, telefono: e.target.value }))} placeholder="5555-1234" /></div>
                   <div>
                     <label className="block text-sm font-medium mb-1.5">Sector</label>
                     <select value={form.sectorId} onChange={e => setForm(p => ({ ...p, sectorId: e.target.value }))} className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" required>
                       <option value="">Selecciona un sector</option>
-                      {sectores.map(s => (
-                        <option key={s.id} value={s.id}>{s.nombre}</option>
-                      ))}
+                      {sectores.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
                     </select>
                   </div>
                 </div>
               )}
-
               {error && <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2"><p className="text-sm text-destructive">{error}</p></div>}
               <div className="flex gap-3 pt-2">
                 <Button type="button" variant="outline" className="flex-1" onClick={() => setShowModal(false)}>Cancelar</Button>
-                <Button type="submit" className="flex-1" disabled={saving}>
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Crear Usuario
-                </Button>
+                <Button type="submit" className="flex-1" disabled={saving}>{saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Crear Usuario</Button>
               </div>
             </form>
           </div>
@@ -374,14 +344,8 @@ export function UsuariosView() {
               <button onClick={() => setShowEditModal(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleEditar} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1.5">Nombre completo</label>
-                <Input value={editForm.nombre} onChange={e => setEditForm(p => ({ ...p, nombre: e.target.value }))} required />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1.5">Correo electrónico</label>
-                <Input type="email" value={editForm.email} onChange={e => setEditForm(p => ({ ...p, email: e.target.value }))} required />
-              </div>
+              <div><label className="block text-sm font-medium mb-1.5">Nombre completo</label><Input value={editForm.nombre} onChange={e => setEditForm(p => ({ ...p, nombre: e.target.value }))} required /></div>
+              <div><label className="block text-sm font-medium mb-1.5">Correo electrónico</label><Input type="email" value={editForm.email} onChange={e => setEditForm(p => ({ ...p, email: e.target.value }))} required /></div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Rol</label>
                 <select value={editForm.rol} onChange={e => setEditForm(p => ({ ...p, rol: e.target.value }))} className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
@@ -401,9 +365,37 @@ export function UsuariosView() {
               {editError && <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2"><p className="text-sm text-destructive">{editError}</p></div>}
               <div className="flex gap-3 pt-2">
                 <Button type="button" variant="outline" className="flex-1" onClick={() => setShowEditModal(false)}>Cancelar</Button>
-                <Button type="submit" className="flex-1" disabled={editSaving}>
-                  {editSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Guardar cambios
-                </Button>
+                <Button type="submit" className="flex-1" disabled={editSaving}>{editSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Guardar cambios</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal Cambiar Contraseña ── */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md shadow-xl">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-lg font-semibold">Cambiar Contraseña</h2>
+                <p className="text-sm text-muted-foreground mt-0.5">{passwordForm.nombre}</p>
+              </div>
+              <button onClick={() => setShowPasswordModal(false)} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={handleCambiarPassword} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Nueva contraseña</label>
+                <Input type="password" value={passwordForm.nuevaPassword} onChange={e => setPasswordForm(p => ({ ...p, nuevaPassword: e.target.value }))} placeholder="Mínimo 8 caracteres" required minLength={8} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Confirmar contraseña</label>
+                <Input type="password" value={passwordForm.confirmarPassword} onChange={e => setPasswordForm(p => ({ ...p, confirmarPassword: e.target.value }))} placeholder="Repite la nueva contraseña" required minLength={8} />
+              </div>
+              {passwordError && <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2"><p className="text-sm text-destructive">{passwordError}</p></div>}
+              <div className="flex gap-3 pt-2">
+                <Button type="button" variant="outline" className="flex-1" onClick={() => setShowPasswordModal(false)}>Cancelar</Button>
+                <Button type="submit" className="flex-1" disabled={passwordSaving}>{passwordSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Actualizar contraseña</Button>
               </div>
             </form>
           </div>
